@@ -1,0 +1,53 @@
+# Secrets and local authentication
+.env
+.env.*
+!.env.example
+.netrc
+.config/gh/
+.cache/huggingface/
+**/token
+**/tokens.json
+
+# Python tooling
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Large/source data: directory placeholders are retained with .gitkeep
+data/raw/**
+!data/raw/
+!data/raw/github/
+!data/raw/huggingface/
+!data/raw/**/.gitkeep
+data/interim/**
+!data/interim/
+!data/interim/**/.gitkeep
+*.zip
+*.log
+*.parquet
+*.jsonl
+*.sqlite
+*.duckdb
+
+# Per-request exclusion ledger is useful locally but too large/noisy for the
+# versioned reproducibility summary.  Aggregate CSVs remain reviewable.
+data/processed/h200_request_exclusions.csv
+
+# Vendor checkout metadata and temporary files. Provenance lives in
+# manifests/provenance.json and vendor/README.md; do not accidentally vendor
+# a moving full clone into this analysis repository.
+vendor/InferenceX/**
+!vendor/InferenceX/
+!vendor/README.md
+*.tmp
+*.swp
+.DS_Store

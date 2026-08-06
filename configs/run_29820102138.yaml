@@ -1,0 +1,49 @@
+github:
+  repository: SemiAnalysisAI/InferenceX
+  run_id: 29820102138
+  expected_head_sha: 3ac9ddfd8161c96ec7e18b1bcfab340369185fcf
+  expected_branch: explore/glm52-h200-agentx-pp-pareto
+  expected_artifacts:
+    raw_agentic:
+      1: 8497343270
+      2: 8497653427
+      3: 8493759151
+      4: 8494252371
+      5: 8493778705
+      6: 8496840792
+      7: 8494487713
+      8: 8496993692
+    aggregated_agentic:
+      1: 8497341275
+      2: 8497651306
+      3: 8493757488
+      4: 8494250612
+      5: 8493776928
+      6: 8496838493
+      7: 8494486057
+      8: 8496991623
+    run_summary:
+      results_bmk: 8497663596
+      run-stats: 8497677426
+expected_environment:
+  target_model: GLM-5.2 FP8
+  source_dataset: semianalysisai/cc-traces-weka-062126
+  hardware: H200
+  total_gpus: 16
+  prefill_workers: 1
+  prefill_gpus_per_worker: 8
+  decode_workers: 1
+  decode_gpus_per_worker: 8
+  framework: Dynamo + SGLang
+  serving_mode: prefill/decode disaggregated
+  kv_transfer: Mooncake
+  decode_kv_strategy: HiSparse
+  context_length: 1048576
+  concurrency: [1, 2, 3, 4, 5, 6, 7, 8]
+analysis:
+  profile_phase: profiling
+  source_trace_file: data/raw/huggingface/cc-traces-weka-062126/traces.jsonl
+  raw_github_dir: data/raw/github/run_29820102138
+  processed_dir: data/processed
+  figures_dir: figures
+  reports_dir: reports

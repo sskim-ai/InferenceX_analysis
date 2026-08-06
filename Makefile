@@ -1,0 +1,74 @@
+SHELL := /bin/bash
+PYTHON ?= .venv/bin/python
+CONFIG := configs/run_29820102138.yaml
+
+.PHONY: bootstrap preflight acquire-run acquire-traces inspect build-source build-h200 join coverage analyze-ids analyze-concurrency validate figures report test lint secret-scan all
+
+bootstrap:
+	bash scripts/bootstrap.sh
+
+preflight:
+	$(PYTHON) scripts/preflight.py
+
+acquire-run:
+	$(PYTHON) scripts/acquire_github_artifacts.py --config $(CONFIG)
+
+acquire-traces:
+	$(PYTHON) scripts/acquire_hf_trace.py --config $(CONFIG)
+
+inspect:
+	$(PYTHON) scripts/inspect_artifacts.py --config $(CONFIG)
+
+build-source:
+	$(PYTHON) scripts/build_source_trace_table.py --config $(CONFIG) --missing-policy empty
+	$(PYTHON) scripts/analyze_source_workload.py --config $(CONFIG)
+
+build-h200:
+	$(PYTHON) scripts/build_h200_request_table.py --config $(CONFIG)
+
+join:
+	$(PYTHON) scripts/join_trace_ids.py --config $(CONFIG)
+
+coverage:
+	$(PYTHON) scripts/run_analysis.py --config $(CONFIG) --stage coverage
+
+analyze-ids:
+	$(PYTHON) scripts/run_analysis.py --config $(CONFIG) --stage ids
+
+analyze-concurrency:
+	$(PYTHON) scripts/run_analysis.py --config $(CONFIG) --stage concurrency
+
+validate:
+	$(PYTHON) scripts/run_analysis.py --config $(CONFIG) --stage validate
+
+figures:
+	$(PYTHON) scripts/build_reports.py --figures-only
+
+report:
+	$(PYTHON) scripts/build_reports.py --reports-only
+
+test:
+	$(PYTHON) -m pytest
+
+lint:
+	$(PYTHON) -m ruff check .
+
+secret-scan:
+	$(PYTHON) scripts/secret_scan.py
+
+all: preflight
+	$(MAKE) acquire-run
+	$(MAKE) acquire-traces
+	$(MAKE) inspect
+	$(MAKE) build-source
+	$(MAKE) build-h200
+	$(MAKE) join
+	$(MAKE) coverage
+	$(MAKE) analyze-ids
+	$(MAKE) analyze-concurrency
+	$(MAKE) validate
+	$(MAKE) figures
+	$(MAKE) report
+	$(MAKE) test
+	$(MAKE) lint
+	$(MAKE) secret-scan
