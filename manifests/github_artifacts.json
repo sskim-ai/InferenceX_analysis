@@ -1,0 +1,525 @@
+{
+  "artifacts": [
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497677426/zip",
+      "created_at": "2026-07-21T13:58:54Z",
+      "digest": "sha256:bbac5e76256ba7906565b4326cb30d3d8bd0d017c554d32ecfc15722f79c55d6",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8497677426,
+      "name": "run-stats",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk3Njc3NDI2",
+      "size_in_bytes": 277,
+      "updated_at": "2026-07-21T13:58:54Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497677426",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497663596/zip",
+      "created_at": "2026-07-21T13:58:27Z",
+      "digest": "sha256:50e79dc874570ed5e2d2ee8570b7b97b331b4712fb62fa3262d234182dadad61",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8497663596,
+      "name": "results_bmk",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk3NjYzNTk2",
+      "size_in_bytes": 5046,
+      "updated_at": "2026-07-21T13:58:27Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497663596",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497653427/zip",
+      "created_at": "2026-07-21T13:58:08Z",
+      "digest": "sha256:727a5a1ebd6f34610e91c6c7d6ecfaaec0ccdf89ff9d85633642856fab66ff00",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8497653427,
+      "name": "agentic_glm5.2_p1x1_d1x8_conc2_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc2_h200-dgxc-slurm_1",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk3NjUzNDI3",
+      "size_in_bytes": 11163389,
+      "updated_at": "2026-07-21T13:58:08Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497653427",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497651306/zip",
+      "created_at": "2026-07-21T13:58:04Z",
+      "digest": "sha256:40ea606d6927c7ab49317d5412185e13df6acdb24755789f2d06d37d2eec8baf",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8497651306,
+      "name": "bmk_agentic_glm5.2_p1x1_d1x8_conc2_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc2_h200-dgxc-slurm_1",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk3NjUxMzA2",
+      "size_in_bytes": 2026,
+      "updated_at": "2026-07-21T13:58:04Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497651306",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497650487/zip",
+      "created_at": "2026-07-21T13:58:03Z",
+      "digest": "sha256:5f8401428e03099086b1d083fdf1172ad66207534b9a9789ae9b8c7a053900f7",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8497650487,
+      "name": "multinode_server_logs_glm5.2_p1x1_d1x8_conc2_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc2_h200-dgxc-slurm_1",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk3NjUwNDg3",
+      "size_in_bytes": 5151880,
+      "updated_at": "2026-07-21T13:58:03Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497650487",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497343270/zip",
+      "created_at": "2026-07-21T13:48:17Z",
+      "digest": "sha256:2bf20a22b620b6b8677afc1d62fb5f0c9dbc6365dd0453ceeb44cb414846c0df",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8497343270,
+      "name": "agentic_glm5.2_p1x1_d1x8_conc1_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc1_h200-dgxc-slurm_3",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk3MzQzMjcw",
+      "size_in_bytes": 10931958,
+      "updated_at": "2026-07-21T13:48:17Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497343270",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497341275/zip",
+      "created_at": "2026-07-21T13:48:13Z",
+      "digest": "sha256:316d0e6acc1c6a00b6c93377f7cbd5bc9dac6d4bd75c40a148a536c4de6e0b38",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8497341275,
+      "name": "bmk_agentic_glm5.2_p1x1_d1x8_conc1_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc1_h200-dgxc-slurm_3",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk3MzQxMjc1",
+      "size_in_bytes": 2014,
+      "updated_at": "2026-07-21T13:48:13Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497341275",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497340541/zip",
+      "created_at": "2026-07-21T13:48:12Z",
+      "digest": "sha256:692cf5a3dee14c4500c42bbc10afcec00b82f9c35ef688a1c4d4a0db4f8d0998",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8497340541,
+      "name": "multinode_server_logs_glm5.2_p1x1_d1x8_conc1_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc1_h200-dgxc-slurm_3",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk3MzQwNTQx",
+      "size_in_bytes": 4702635,
+      "updated_at": "2026-07-21T13:48:12Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8497340541",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496993692/zip",
+      "created_at": "2026-07-21T13:37:05Z",
+      "digest": "sha256:34960416000c174d2e79e5a2f3188a74f781edd5d9ee281ae4dbf2bdb27f6649",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8496993692,
+      "name": "agentic_glm5.2_p1x1_d1x8_conc8_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc8_h200-dgxc-slurm_5",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk2OTkzNjky",
+      "size_in_bytes": 11150043,
+      "updated_at": "2026-07-21T13:37:05Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496993692",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496991623/zip",
+      "created_at": "2026-07-21T13:37:01Z",
+      "digest": "sha256:ad1c1ca18386ab331a91027064ffa2a5400df185ba9a44461c5be9df75a277e2",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8496991623,
+      "name": "bmk_agentic_glm5.2_p1x1_d1x8_conc8_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc8_h200-dgxc-slurm_5",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk2OTkxNjIz",
+      "size_in_bytes": 2043,
+      "updated_at": "2026-07-21T13:37:01Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496991623",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496990837/zip",
+      "created_at": "2026-07-21T13:36:59Z",
+      "digest": "sha256:7cfd33282160baf966fffffe674343ac34355d4081cd9c4eb018186475cf6aa1",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8496990837,
+      "name": "multinode_server_logs_glm5.2_p1x1_d1x8_conc8_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc8_h200-dgxc-slurm_5",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk2OTkwODM3",
+      "size_in_bytes": 4352146,
+      "updated_at": "2026-07-21T13:36:59Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496990837",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496840792/zip",
+      "created_at": "2026-07-21T13:32:09Z",
+      "digest": "sha256:335a449752dd62e03e78ef69b77d91e33222f956420baf3bafe8398f03b5ceb8",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8496840792,
+      "name": "agentic_glm5.2_p1x1_d1x8_conc6_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc6_h200-dgxc-slurm_0",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk2ODQwNzky",
+      "size_in_bytes": 10838107,
+      "updated_at": "2026-07-21T13:32:09Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496840792",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496838493/zip",
+      "created_at": "2026-07-21T13:32:04Z",
+      "digest": "sha256:a5dfd771488e019b7957822639ec62c21ad5e1af09680b0ab61969344e40353b",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8496838493,
+      "name": "bmk_agentic_glm5.2_p1x1_d1x8_conc6_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc6_h200-dgxc-slurm_0",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk2ODM4NDkz",
+      "size_in_bytes": 2039,
+      "updated_at": "2026-07-21T13:32:04Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496838493",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496837681/zip",
+      "created_at": "2026-07-21T13:32:03Z",
+      "digest": "sha256:8104a5bfafd50f44cedbcccb076ad8a7c717d69a8330ba93a3ff524cb33f00db",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8496837681,
+      "name": "multinode_server_logs_glm5.2_p1x1_d1x8_conc6_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc6_h200-dgxc-slurm_0",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk2ODM3Njgx",
+      "size_in_bytes": 3979881,
+      "updated_at": "2026-07-21T13:32:03Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8496837681",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494487713/zip",
+      "created_at": "2026-07-21T12:11:33Z",
+      "digest": "sha256:91939f0c94442f2a8e48a2bb1323c1455055787b413a6c86d3a0615f8c3d4308",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8494487713,
+      "name": "agentic_glm5.2_p1x1_d1x8_conc7_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc7_h200-dgxc-slurm_9",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk0NDg3NzEz",
+      "size_in_bytes": 11217683,
+      "updated_at": "2026-07-21T12:11:33Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494487713",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494486057/zip",
+      "created_at": "2026-07-21T12:11:30Z",
+      "digest": "sha256:433ebf6ab6021c9cbb08b00781b1e99bb830fb27e787ef8fa9566e7325d97377",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8494486057,
+      "name": "bmk_agentic_glm5.2_p1x1_d1x8_conc7_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc7_h200-dgxc-slurm_9",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk0NDg2MDU3",
+      "size_in_bytes": 2038,
+      "updated_at": "2026-07-21T12:11:30Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494486057",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494485451/zip",
+      "created_at": "2026-07-21T12:11:28Z",
+      "digest": "sha256:b3cdbbfdc4d4b2a88194b57422f1268923479eaf2057d43e67067adf6e736d1e",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8494485451,
+      "name": "multinode_server_logs_glm5.2_p1x1_d1x8_conc7_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc7_h200-dgxc-slurm_9",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk0NDg1NDUx",
+      "size_in_bytes": 4463027,
+      "updated_at": "2026-07-21T12:11:28Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494485451",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494252371/zip",
+      "created_at": "2026-07-21T12:02:28Z",
+      "digest": "sha256:82a1ea0c57b490d17a9365471e62f84287e78bff721023093b14cb5080c5574f",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8494252371,
+      "name": "agentic_glm5.2_p1x1_d1x8_conc4_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc4_h200-dgxc-slurm_6",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk0MjUyMzcx",
+      "size_in_bytes": 11497581,
+      "updated_at": "2026-07-21T12:02:28Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494252371",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494250612/zip",
+      "created_at": "2026-07-21T12:02:24Z",
+      "digest": "sha256:bbb7f9d18959c04d2d939d8de899ec098cf132b2f52b1c69b9bf14483ba339e8",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8494250612,
+      "name": "bmk_agentic_glm5.2_p1x1_d1x8_conc4_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc4_h200-dgxc-slurm_6",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk0MjUwNjEy",
+      "size_in_bytes": 2044,
+      "updated_at": "2026-07-21T12:02:24Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494250612",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494249956/zip",
+      "created_at": "2026-07-21T12:02:22Z",
+      "digest": "sha256:47b221097a867dace7dd0a4ea179b67b4fe1446777d60e051ccef3eeb5352ce4",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8494249956,
+      "name": "multinode_server_logs_glm5.2_p1x1_d1x8_conc4_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc4_h200-dgxc-slurm_6",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDk0MjQ5OTU2",
+      "size_in_bytes": 5269595,
+      "updated_at": "2026-07-21T12:02:22Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8494249956",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493778705/zip",
+      "created_at": "2026-07-21T11:43:59Z",
+      "digest": "sha256:d36209b1ff7bdf0d300892633edde6e8e25b87bc88bffa5bd52db2b4e8572236",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8493778705,
+      "name": "agentic_glm5.2_p1x1_d1x8_conc5_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc5_h200-dgxc-slurm_13",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDkzNzc4NzA1",
+      "size_in_bytes": 10895196,
+      "updated_at": "2026-07-21T11:43:59Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493778705",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493776928/zip",
+      "created_at": "2026-07-21T11:43:54Z",
+      "digest": "sha256:a909d426b4026ec7498c70e7f60386185b4d97f28f162c91195339e930661e55",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8493776928,
+      "name": "bmk_agentic_glm5.2_p1x1_d1x8_conc5_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc5_h200-dgxc-slurm_13",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDkzNzc2OTI4",
+      "size_in_bytes": 2039,
+      "updated_at": "2026-07-21T11:43:54Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493776928",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493776282/zip",
+      "created_at": "2026-07-21T11:43:53Z",
+      "digest": "sha256:246301d762fa2c05394c7201e18b4efb5a9db581ae75c6877b7b7d6cdd4b8063",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8493776282,
+      "name": "multinode_server_logs_glm5.2_p1x1_d1x8_conc5_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc5_h200-dgxc-slurm_13",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDkzNzc2Mjgy",
+      "size_in_bytes": 4246786,
+      "updated_at": "2026-07-21T11:43:53Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493776282",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493759151/zip",
+      "created_at": "2026-07-21T11:43:12Z",
+      "digest": "sha256:a16bdd3363514ec57e31ae843a9e8d76d5218b0d0d89c3ab9523b4f2447fdd73",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8493759151,
+      "name": "agentic_glm5.2_p1x1_d1x8_conc3_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc3_h200-dgxc-slurm_4",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDkzNzU5MTUx",
+      "size_in_bytes": 11602791,
+      "updated_at": "2026-07-21T11:43:12Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493759151",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493757488/zip",
+      "created_at": "2026-07-21T11:43:08Z",
+      "digest": "sha256:e9ef27e1bb589c3456286b346e4dc4003e276eb0e5a7efce22506bc06b6f5621",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8493757488,
+      "name": "bmk_agentic_glm5.2_p1x1_d1x8_conc3_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc3_h200-dgxc-slurm_4",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDkzNzU3NDg4",
+      "size_in_bytes": 2029,
+      "updated_at": "2026-07-21T11:43:08Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493757488",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493756885/zip",
+      "created_at": "2026-07-21T11:43:06Z",
+      "digest": "sha256:3497dd1da4b1c105480b7f6201744e2fa2fbe4013f8df7f1178095c02682030f",
+      "expired": false,
+      "expires_at": "2026-10-19T09:54:08Z",
+      "id": 8493756885,
+      "name": "multinode_server_logs_glm5.2_p1x1_d1x8_conc3_kvdram-hisparse_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw1_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw1_disagg-true_spec-none_conc3_h200-dgxc-slurm_4",
+      "node_id": "MDg6QXJ0aWZhY3Q4NDkzNzU2ODg1",
+      "size_in_bytes": 5580681,
+      "updated_at": "2026-07-21T11:43:06Z",
+      "url": "https://api.github.com/repos/SemiAnalysisAI/InferenceX/actions/artifacts/8493756885",
+      "workflow_run": {
+        "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+        "head_repository_id": 1018687398,
+        "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+        "id": 29820102138,
+        "repository_id": 1018687398
+      }
+    }
+  ],
+  "total_count": 26
+}

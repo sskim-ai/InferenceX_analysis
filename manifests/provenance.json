@@ -1,0 +1,112 @@
+{
+  "acquisition_limitations": {
+    "github_actions_artifact_zip_endpoint": "resolved: authenticated GitHub CLI acquisition completed; all target ZIP SHA-256 values matched API digests",
+    "github_cli_authentication": "authenticated acquisition was verified without storing a credential in this repository",
+    "huggingface_cli": "project virtualenv hf CLI is available; immutable revision was validated locally"
+  },
+  "benchmark_recipe_evidence": {
+    "context_length": 1048576,
+    "decode_kv_strategy": "HiSparse (flashmla_sparse)",
+    "framework": "Dynamo frontend + SGLang backend",
+    "hardware": "h200",
+    "kv_transfer": "mooncake",
+    "path": "vendor/InferenceX/benchmarks/multi_node/srt-slurm-recipes/sglang/glm5.2/agentic/disagg-h200-1p1d-pcp8-tp8-dp8-hisparse.yaml",
+    "precision": "fp8",
+    "serving_mode": "prefill/decode disaggregated",
+    "source_dataset": "semianalysisai/cc-traces-weka-062126",
+    "target_model": "zai-org/GLM-5.2-FP8",
+    "topology": "1 prefill worker x 8 H200 + 1 decode worker x 8 H200 (16 total)",
+    "trace_loader_override": "semianalysis_cc_traces_weka_062126"
+  },
+  "captured_at_utc": "2026-08-06T07:57:01Z",
+  "github": {
+    "actual_run": {
+      "conclusion": "success",
+      "created_at": "2026-07-21T09:54:06Z",
+      "display_title": "e2e Test - GLM-5.2 FP8 H200 AgentX HiSparse complete c1-c8 sweep unofficial",
+      "event": "workflow_dispatch",
+      "head_branch": "explore/glm52-h200-agentx-pp-pareto",
+      "head_sha": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+      "status": "completed",
+      "updated_at": "2026-07-21T13:59:03Z"
+    },
+    "artifact_inventory": {
+      "all_target_artifacts_expired": false,
+      "count": 26,
+      "target_aggregated_agentic_count": 8,
+      "target_raw_agentic_count": 8,
+      "target_summary_count": 2
+    },
+    "artifact_inventory_file": "manifests/github_artifacts.json",
+    "expected_provenance_match": {
+      "aggregated_artifact_ids_conc_1_to_8": true,
+      "branch": true,
+      "head_sha": true,
+      "raw_artifact_ids_conc_1_to_8": true,
+      "results_bmk_artifact_id": true,
+      "run_stats_artifact_id": true
+    },
+    "repository": "SemiAnalysisAI/InferenceX",
+    "run_id": 29820102138,
+    "run_metadata_file": "manifests/github_run.json",
+    "workflow": {
+      "id": 202452638,
+      "name": "End-to-End Tests",
+      "path_at_head": ".github/workflows/e2e-tests.yml"
+    }
+  },
+  "github_actions_artifact_download": {
+    "aggregated_json_artifact_count": 8,
+    "blocked_artifact_count": 0,
+    "digest_verified_archive_count": 18,
+    "failed_artifact_count": 0,
+    "metadata_source": "live_github_api",
+    "per_artifact_ledger": "manifests/downloads.json",
+    "raw_profile_export_count": 8,
+    "recorded_at_utc": "2026-08-06T10:04:29Z",
+    "repository": "SemiAnalysisAI/InferenceX",
+    "run_id": 29820102138,
+    "status": "complete_and_digest_verified",
+    "target_artifact_count": 18
+  },
+  "huggingface": {
+    "acquired_at": "2026-08-06T08:45:21Z",
+    "bytes": 1847151435,
+    "dataset": "semianalysisai/cc-traces-weka-062126",
+    "download_method": "hf CLI 1.26.0 with hf-xet, immutable revision, isolated staging directory then validated rename",
+    "download_status_at_capture": "complete_and_validated",
+    "expected_size_bytes": 1847151435,
+    "file": "data/raw/huggingface/cc-traces-weka-062126/traces.jsonl",
+    "local_path": "data/raw/huggingface/cc-traces-weka-062126/traces.jsonl",
+    "local_sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+    "non_authoritative_partial_path": "data/raw/huggingface/cc-traces-weka-062126/traces.jsonl.curl-partial-unverified",
+    "remote_size_bytes": 1847151435,
+    "remote_x_linked_etag": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+    "revision": "23f152f6f0f9399a85901b89a6458def0ef16729",
+    "revision_last_modified": "2026-06-21T17:48:50.000Z",
+    "sha256": "29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276",
+    "validation": {
+      "byte_count": 1847151435,
+      "empty_line_count": 0,
+      "jsonl_record_count": 393,
+      "top_level_keys": [
+        "block_size",
+        "hash_id_scope",
+        "id",
+        "models",
+        "requests"
+      ],
+      "unique_root_id_count": 393
+    }
+  },
+  "inferencex_source": {
+    "acquisition": "full public clone (not a submodule; parent repository .gitmodules was not changed)",
+    "branch_containing_commit": "origin/explore/glm52-h200-agentx-pp-pareto",
+    "commit": "3ac9ddfd8161c96ec7e18b1bcfab340369185fcf",
+    "commit_subject": "test: prepare complete HiSparse AgentX sweep",
+    "commit_timestamp": "2026-07-21 00:45:38 -0700",
+    "is_shallow_clone": false,
+    "local_path": "vendor/InferenceX",
+    "repository": "https://github.com/SemiAnalysisAI/InferenceX.git"
+  }
+}
