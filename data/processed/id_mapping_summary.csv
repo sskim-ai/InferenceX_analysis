@@ -1,0 +1,9 @@
+concurrency,source_trace_count,h200_request_count,h200_root_ids,h200_distinct_root_ids,matched_root_ids,unmatched_h200_ids,unmatched_root_ids,root_match_rate,never_observed_source_ids,root_only_match_count,branch_match_unverified_count,exact_turn_match_count,unmatched_request_count,exact_turn_match_rate,loader_metadata_turn_match_count,loader_metadata_turn_match_rate,loader_metadata_input_compatible_count,root_only_match_rate,normalization_rule_count,normalization_matched_request_count,normalization_request_match_rate,explicit_source_trace_id_request_count,explicit_source_trace_id_match_rate
+1,393,355,2,2,2,0,0,1.0,391,0,0,1,0,0.0028169014084507044,355,1.0,1,0.0,1,355,1.0,355,1.0
+2,393,395,4,4,4,0,0,1.0,389,0,0,1,0,0.002531645569620253,395,1.0,1,0.0,1,395,1.0,395,1.0
+3,393,455,7,7,7,0,0,1.0,386,0,0,5,0,0.01098901098901099,455,1.0,5,0.0,1,455,1.0,455,1.0
+4,393,379,8,8,8,0,0,1.0,385,0,0,5,0,0.013192612137203167,379,1.0,5,0.0,1,379,1.0,379,1.0
+5,393,250,7,7,7,0,0,1.0,386,0,0,2,0,0.008,250,1.0,2,0.0,1,250,1.0,250,1.0
+6,393,197,9,9,9,0,0,1.0,384,0,0,3,0,0.015228426395939087,197,1.0,3,0.0,1,197,1.0,197,1.0
+7,393,241,9,9,9,0,0,1.0,384,0,0,3,0,0.012448132780082987,241,1.0,3,0.0,1,241,1.0,241,1.0
+8,393,219,11,11,11,0,0,1.0,382,0,0,1,0,0.0045662100456621,219,1.0,1,0.0,1,219,1.0,219,1.0

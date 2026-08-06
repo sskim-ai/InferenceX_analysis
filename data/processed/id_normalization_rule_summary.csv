@@ -1,0 +1,9 @@
+concurrency,normalization_rule,h200_request_count,distinct_conversation_ids,distinct_root_trace_ids,source_matched_request_count,source_request_match_rate
+1,explicit_metadata_source_trace_id,638,30,5,638,1.0
+2,explicit_metadata_source_trace_id,954,49,7,954,1.0
+3,explicit_metadata_source_trace_id,1025,65,10,1025,1.0
+4,explicit_metadata_source_trace_id,584,47,10,584,1.0
+5,explicit_metadata_source_trace_id,300,18,7,300,1.0
+6,explicit_metadata_source_trace_id,241,32,9,241,1.0
+7,explicit_metadata_source_trace_id,313,39,9,313,1.0
+8,explicit_metadata_source_trace_id,302,38,11,302,1.0

@@ -1,0 +1,11 @@
+{
+  "exact_turn_match_count": 21,
+  "h200_all_rows": 4357,
+  "h200_available": true,
+  "h200_profiled_rows": 2491,
+  "normalization_rule_rows": 8,
+  "source_request_rows": 98827,
+  "source_trace_count": 393,
+  "status": "completed",
+  "unmatched_h200_id_example_rows": 0
+}

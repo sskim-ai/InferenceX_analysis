@@ -1,0 +1,9 @@
+concurrency,all_request_count,profiled_request_count,warmup_count,profiling_phase_count,error_count,cancellation_count,distinct_root_ids,matched_root_ids,unmatched_root_ids,root_match_rate,distinct_conversation_branches,distinct_session_num,root_request_count,subagent_request_count,unknown_branch_request_count,replay_root_request_count,replay_nonroot_branch_request_count,replay_unknown_branch_request_count,source_origin_root_request_count,source_origin_subagent_request_count,source_origin_unknown_branch_request_count,total_input_tokens,total_output_tokens,source_trace_count,never_observed_source_ids,distinct_branches
+1,638,355,283,355,0,0,2,2,0,1.0,17,355,98,257,0,98,257,0,200,155,0,11688050.0,127262.0,393,391,17
+2,954,395,559,395,0,0,4,4,0,1.0,24,395,164,231,0,164,231,0,347,48,0,9403092.0,125538.0,393,389,24
+3,1025,455,570,455,0,0,7,7,0,1.0,39,455,204,251,0,204,251,0,399,56,0,11798806.0,159005.0,393,386,39
+4,584,379,205,379,0,0,8,8,0,1.0,38,379,209,170,0,209,170,0,239,140,0,17903749.0,243209.0,393,385,38
+5,300,250,50,250,0,0,7,7,0,1.0,16,250,110,140,0,110,140,0,163,87,0,9610851.0,108877.0,393,386,16
+6,241,197,44,197,0,0,9,9,0,1.0,29,197,89,108,0,89,108,0,108,89,0,7222734.0,112007.0,393,384,29
+7,313,241,72,241,0,0,9,9,0,1.0,35,241,65,176,0,65,176,0,94,147,0,10704094.0,124318.0,393,384,35
+8,302,219,83,219,0,0,11,11,0,1.0,25,219,78,141,0,78,141,0,110,109,0,10494324.0,84618.0,393,382,25
