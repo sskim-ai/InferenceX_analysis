@@ -45,8 +45,7 @@ data/processed/h200_request_exclusions.csv
 # Vendor checkout metadata and temporary files. Provenance lives in
 # manifests/provenance.json and vendor/README.md; do not accidentally vendor
 # a moving full clone into this analysis repository.
-vendor/InferenceX/**
-!vendor/InferenceX/
+vendor/InferenceX/
 !vendor/README.md
 *.tmp
 *.swp
