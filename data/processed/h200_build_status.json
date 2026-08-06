@@ -1,0 +1,13 @@
+{
+  "all_record_count": 4357,
+  "exact_duplicate_count": 0,
+  "excluded_record_count": 1866,
+  "h200_available": true,
+  "malformed_jsonl_issues": [],
+  "malformed_jsonl_line_count": 0,
+  "output_dir": "/Users/sskim/Documents/Codex/2026-08-06/h200-agentx-conversation-id-benchmark-analysis/data/processed",
+  "profile_export_count": 8,
+  "profiled_record_count": 2491,
+  "raw_root": "/Users/sskim/Documents/Codex/2026-08-06/h200-agentx-conversation-id-benchmark-analysis/data/raw/github/run_29820102138",
+  "status": "completed"
+}

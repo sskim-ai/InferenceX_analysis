@@ -1,0 +1,9 @@
+{
+  "malformed_jsonl_issues": [],
+  "malformed_jsonl_line_count": 0,
+  "metric_key_rows": 272,
+  "profile_export_count": 8,
+  "raw_root": "/Users/sskim/Documents/Codex/2026-08-06/h200-agentx-conversation-id-benchmark-analysis/data/raw/github/run_29820102138",
+  "schema_field_rows": 664,
+  "status": "completed"
+}
