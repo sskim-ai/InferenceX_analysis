@@ -1,0 +1,15 @@
+{
+  "h200_available": true,
+  "h200_profiled_rows": 2491,
+  "session_num_replay_semantics": "Unknown: profile_export metadata does not establish session_num as an independent replay-instance identifier; root_trace_id is the cross-concurrency bootstrap cluster unit.",
+  "source_trace_count": 393,
+  "stages": {
+    "validate": {
+      "published_aggregate_files": 8,
+      "raw_aggregate_rows": 8,
+      "validation_pass_count": 240,
+      "validation_rows": 240
+    }
+  },
+  "status": "completed"
+}

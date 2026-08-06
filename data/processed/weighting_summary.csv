@@ -1,0 +1,5 @@
+weighting,sample_count,median_ttft_ms,median_itl_ms,median_e2e_ms
+request_weighted,2491,3647.6553609999996,31.43021769642857,25045.121678
+root_id_weighted,57,103299.104864,31.471704529411763,135321.454989
+session_num_group_weighted_unvalidated,2491,3647.6553609999996,31.43021769642857,25045.121678
+output_token_weighted_itl,1365,,31.976646172319676,
