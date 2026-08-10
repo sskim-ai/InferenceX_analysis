@@ -4,6 +4,13 @@ This repository is a reproducible analysis pipeline for the public InferenceX Gi
 
 The source trace `model` field is a workload-provenance label from the original Claude Code collection. It is not the target model. The benchmark target is expected to be GLM-5.2 FP8 replayed on a shared 16×H200 system; every expected configuration value is revalidated against actual run metadata and source/config evidence.
 
+## Studies
+
+- **Study A — H200 HiSparse AgentX:** GitHub Actions run `29820102138`, the historical baseline retained in the repository root (`reports/`, `data/processed/`, and `figures/`).
+- **Study B — H200 GPU-resident KV + MTP AgentX:** GitHub Actions run `31235207041`, analyzed without changing Study A under [studies/h200_gpu_resident_mtp](studies/h200_gpu_resident_mtp/README.md).
+
+Study B compares public c8/c12/c16 replay evidence and retains the c8 HiSparse comparison only as an observed system-level difference. It does not assign a conversation ID to any GPU.
+
 ## Quick start
 
 ```sh

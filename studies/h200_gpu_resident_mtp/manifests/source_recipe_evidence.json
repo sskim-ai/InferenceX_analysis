@@ -1,0 +1,277 @@
+{
+  "schema_version": "h200_gpu_resident_mtp.source_recipe_evidence.v1",
+  "retrieved_at_utc": "2026-08-10T05:35:40Z",
+  "source_repository": "SemiAnalysisAI/InferenceX",
+  "source_repository_url": "https://github.com/SemiAnalysisAI/InferenceX",
+  "analysis_scope": "Public configuration and GitHub Actions metadata only. Runtime allocation and behavior require the separately acquired server logs and artifacts.",
+  "actions_run": {
+    "id": 31235207041,
+    "url": "https://github.com/SemiAnalysisAI/InferenceX/actions/runs/31235207041",
+    "event": "pull_request",
+    "display_title": "Run Sweep - Refresh GLM-5.2 FP8 H200 AgentX 2P2D with MTP",
+    "workflow_id": 214438218,
+    "workflow_name": "Run Sweep",
+    "workflow_path": ".github/workflows/run-sweep.yml",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-08-08T02:32:54Z",
+    "updated_at": "2026-08-08T10:24:38Z",
+    "head_branch": "agent/refresh-glm52-h200-sglang-agentic-mtp-2p2d",
+    "head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802",
+    "head_commit_message": "Merge origin/main into AgentX H200 MTP refresh",
+    "head_commit_parents": [
+      "519189332bedf2b720ae0d2e9f70eef20f3e75c8",
+      "0ae7add57aa4b2cbdad763426a988d6dd4b6af9d"
+    ],
+    "evidence_classification": "Evidence"
+  },
+  "pull_request": {
+    "number": 2529,
+    "url": "https://github.com/SemiAnalysisAI/InferenceX/pull/2529",
+    "title": "Refresh GLM-5.2 FP8 H200 AgentX 2P2D with MTP",
+    "state_at_retrieval": "closed",
+    "merged_at": "2026-08-08T23:02:40Z",
+    "head_ref_at_retrieval": "agent/refresh-glm52-h200-sglang-agentic-mtp-2p2d",
+    "head_sha_at_retrieval": "bc83b176b094fed2d17452018f5cafafe9cdbccd",
+    "merge_commit_sha": "6891093d9c3cf5f83fcb8d81d75415991b2bf3ef",
+    "base_ref_at_retrieval": "main",
+    "base_sha_at_retrieval": "c34114228206d944cc37dd45eabf953e2d59c8fd",
+    "changed_files_from_pr_api": [
+      "benchmarks/multi_node/srt-slurm-recipes/sglang/glm5.2/agentic/disagg-h200-2p2d-pcp8-tp8-dp8-mtp.yaml",
+      "configs/nvidia-master.yaml",
+      "perf-changelog.yaml",
+      "runners/launch_h200-dgxc-slurm.sh"
+    ],
+    "evidence_classification": "Evidence",
+    "important_distinction": "The executed Actions run head SHA is 48ec5aa..., not the PR head SHA returned after merge (bc83b176...). The at-run SHA is the canonical ref for this study."
+  },
+  "current_main_at_retrieval": {
+    "sha": "09e6cd0d7be787fa1b015187fd08823c352a9e03",
+    "observed_at_utc": "2026-08-10T05:35:40Z",
+    "classification": "Evidence",
+    "note": "Recorded only to distinguish current main from the run commit; it is not used as configuration evidence."
+  },
+  "canonical_recipe": {
+    "path": "benchmarks/multi_node/srt-slurm-recipes/sglang/glm5.2/agentic/disagg-h200-2p2d-pcp8-tp8-dp8-mtp.yaml",
+    "url": "https://github.com/SemiAnalysisAI/InferenceX/blob/48ec5aa103dbf8e671580cd191eeef7e7186c802/benchmarks/multi_node/srt-slurm-recipes/sglang/glm5.2/agentic/disagg-h200-2p2d-pcp8-tp8-dp8-mtp.yaml",
+    "raw_url": "https://raw.githubusercontent.com/SemiAnalysisAI/InferenceX/48ec5aa103dbf8e671580cd191eeef7e7186c802/benchmarks/multi_node/srt-slurm-recipes/sglang/glm5.2/agentic/disagg-h200-2p2d-pcp8-tp8-dp8-mtp.yaml",
+    "ref": "48ec5aa103dbf8e671580cd191eeef7e7186c802",
+    "git_blob_sha1": "8b02f5e857fb30fa2713f3250e0ba1c41e7544c1",
+    "sha256": "e73585b96e942f094b349b6f36fbf52ac1e71f6e10884feff1d6b504414a4bbe",
+    "retrieval_method": "gh api with Accept: application/vnd.github.raw+json; sha256 computed from those exact bytes",
+    "classification": "Evidence"
+  },
+  "supporting_source_files": {
+    "matrix": {
+      "path": "configs/nvidia-master.yaml",
+      "url": "https://github.com/SemiAnalysisAI/InferenceX/blob/48ec5aa103dbf8e671580cd191eeef7e7186c802/configs/nvidia-master.yaml#L7585-L7650",
+      "ref": "48ec5aa103dbf8e671580cd191eeef7e7186c802",
+      "git_blob_sha1": "3793767bfc844df6069c4d5f4c647d8dbc4c98fa",
+      "sha256": "0aceb16c99997e73a894602f54e072454dac9cb8723198e01262a76fc51930d0",
+      "classification": "Evidence"
+    },
+    "perf_changelog": {
+      "path": "perf-changelog.yaml",
+      "url": "https://github.com/SemiAnalysisAI/InferenceX/blob/48ec5aa103dbf8e671580cd191eeef7e7186c802/perf-changelog.yaml#L5637-L5647",
+      "ref": "48ec5aa103dbf8e671580cd191eeef7e7186c802",
+      "git_blob_sha1": "03fc85ad8686407fa2e517c479167834fd5db6cd",
+      "sha256": "62966180e4297522a69cdd59c50df607b44f1f0a625c85cdb0629504c369fecf",
+      "classification": "Evidence"
+    },
+    "workflow": {
+      "path": ".github/workflows/run-sweep.yml",
+      "url": "https://github.com/SemiAnalysisAI/InferenceX/blob/48ec5aa103dbf8e671580cd191eeef7e7186c802/.github/workflows/run-sweep.yml",
+      "ref": "48ec5aa103dbf8e671580cd191eeef7e7186c802",
+      "git_blob_sha1": "b46c4c5901caec06610c308eaa29109ea58016ab",
+      "sha256": "2194d93bd56e489e60d03085d2f6fd35512d610f9688c15d12a0994bc6ed8863",
+      "classification": "Evidence"
+    }
+  },
+  "workflow_job_evidence": {
+    "source": "GET /repos/SemiAnalysisAI/InferenceX/actions/runs/31235207041/jobs",
+    "classification": "Evidence",
+    "successful_agentic_jobs": [
+      {
+        "job_id": 93046426099,
+        "concurrency": 8,
+        "runner": "h200-dgxc-slurm_7",
+        "label_summary": "glm5.2 fp8 cluster:h200-dgxc dyn-sgl 2P (TP1/PCP8) x 2D (TP8/DPA) mtp c8"
+      },
+      {
+        "job_id": 93046426106,
+        "concurrency": 12,
+        "runner": "h200-dgxc-slurm_6",
+        "label_summary": "glm5.2 fp8 cluster:h200-dgxc dyn-sgl 2P (TP1/PCP8) x 2D (TP8/DPA) mtp c12"
+      },
+      {
+        "job_id": 93046426113,
+        "concurrency": 16,
+        "runner": "h200-dgxc-slurm_11",
+        "label_summary": "glm5.2 fp8 cluster:h200-dgxc dyn-sgl 2P (TP1/PCP8) x 2D (TP8/DPA) mtp c16"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "subject": "model_and_software",
+      "value": {
+        "model": "zai-org/GLM-5.2-FP8",
+        "precision": "fp8",
+        "container": "lmsysorg/sglang:v0.5.16-cu130",
+        "framework": "Dynamo + SGLang",
+        "dynamo_wheel": "1.3.0.dev1"
+      },
+      "source": "recipe lines 8-15; matrix lines 7588-7596",
+      "classification": "Evidence"
+    },
+    {
+      "subject": "resource_topology_declared",
+      "value": {
+        "gpu_type": "h200",
+        "gpus_per_node": 8,
+        "prefill_nodes": 2,
+        "decode_nodes": 2,
+        "prefill_workers": 2,
+        "decode_workers": 2,
+        "gpus_per_prefill_worker": 8,
+        "gpus_per_decode_worker": 8
+      },
+      "source": "recipe lines 20-28",
+      "classification": "Evidence"
+    },
+    {
+      "subject": "search_space_and_phase_roles",
+      "value": {
+        "concurrency_values": [8, 12, 16],
+        "prefill": {
+          "num_worker": 2,
+          "tp": 1,
+          "pcp_size": 8,
+          "ep": 1,
+          "dp_attention": false
+        },
+        "decode": {
+          "num_worker": 2,
+          "tp": 8,
+          "ep": 1,
+          "dp_attention": true
+        },
+        "kv_offloading": "none",
+        "spec_decoding": "mtp",
+        "recipe_selector": "recipes/sglang/glm5.2/agentic/disagg-h200-2p2d-pcp8-tp8-dp8-mtp.yaml"
+      },
+      "source": "matrix lines 7585-7650; confirmed by three successful Actions job labels",
+      "classification": "Evidence"
+    },
+    {
+      "subject": "pd_disaggregation_and_kv_transport",
+      "value": {
+        "prefill_disaggregation_mode": "prefill",
+        "decode_disaggregation_mode": "decode",
+        "transfer_backend": "mooncake",
+        "frontend_type": "dynamo",
+        "router_mode": "kv",
+        "session_affinity_header": "X-Correlation-ID"
+      },
+      "source": "recipe lines 34-46, 72-87, 103-115; matrix lines 7594-7598",
+      "classification": "Evidence"
+    },
+    {
+      "subject": "configured_kv_and_cache_behavior",
+      "value": {
+        "kv_cache_dtype": "fp8_e4m3",
+        "context_length": 1048576,
+        "max_total_tokens": 1048576,
+        "decode_page_size": 64,
+        "decode_disable_radix_cache": true,
+        "decode_max_running_requests": 200,
+        "prefill_max_running_requests": 32,
+        "enable_cache_report_prefill": true,
+        "enable_cache_report_decode": true,
+        "matrix_kv_offloading": "none",
+        "recipe_comment": "released SGLang image does not combine MTP with HiSparse; decode KV cache remains GPU-resident"
+      },
+      "source": "recipe lines 3-6, 88-101, 116-131; matrix lines 7601-7650",
+      "classification": "Evidence"
+    },
+    {
+      "subject": "configured_mtp_and_synthetic_acceptance",
+      "value": {
+        "algorithm": "EAGLE",
+        "speculative_num_steps": 3,
+        "speculative_eagle_topk": 1,
+        "speculative_num_draft_tokens": 4,
+        "simulate_acceptance_length": "2.99",
+        "simulate_acceptance_method": "match-expected",
+        "simulate_acceptance_token_mode": "real-draft-token"
+      },
+      "source": "recipe lines 59-70, 94-97, 124-127; changelog lines 5637-5647",
+      "classification": "Evidence"
+    },
+    {
+      "subject": "workload_source_and_metrics_contract",
+      "value": {
+        "benchmark_command": "bash /infmax-workspace/benchmarks/multi_node/agentic_srt.sh",
+        "weka_loader_override": "semianalysis_cc_traces_weka_062126",
+        "required_server_metric_prefix": "sglang:",
+        "cache_reporting_configured": true,
+        "correlation_id_to_dynamo_session_id": true
+      },
+      "source": "recipe lines 140-153; changelog lines 5642-5647",
+      "classification": "Evidence"
+    }
+  ],
+  "inferences": [
+    {
+      "subject": "total_gpu_count",
+      "value": "32 H200 GPUs",
+      "calculation": "(2 prefill nodes x 8 GPUs/node) + (2 decode nodes x 8 GPUs/node) = 32",
+      "confidence": "high",
+      "basis": "recipe lines 20-28 and distinct prefill/decode node counts",
+      "caveat": "This is an allocation/topology calculation, not a measurement of per-request GPU use."
+    },
+    {
+      "subject": "configured_decode_kv_residency",
+      "value": "GPU-resident decode KV is the intended configuration",
+      "confidence": "high",
+      "basis": "matrix explicitly sets kv-offloading: none; recipe comment states decode KV remains GPU-resident.",
+      "caveat": "Actual runtime allocation, residency, and any fallback must be checked against server startup logs."
+    },
+    {
+      "subject": "configured_hisparse_state",
+      "value": "HiSparse is not configured for this MTP recipe",
+      "confidence": "high",
+      "basis": "Recipe comment explicitly says released SGLang does not combine MTP with HiSparse; matrix uses kv-offloading: none.",
+      "caveat": "This establishes configured intent, not a runtime proof that no other cache path was loaded."
+    }
+  ],
+  "unknown": [
+    {
+      "subject": "actual_runtime_prefill_parallelism",
+      "reason": "The execution matrix/job label says TP1/PCP8, while the selected recipe's prefill sglang_config lists tp-size: 8 and attn-cp-size: 8. The actual generated server invocation and startup logs are needed to resolve effective flags."
+    },
+    {
+      "subject": "physical_gpu_kv_allocation",
+      "reason": "The recipe supplies a static memory fraction and logical limits, not observed GPU KV blocks, token slots, GiB, or remaining HBM."
+    },
+    {
+      "subject": "runtime_mtp_acceptance_behavior",
+      "reason": "The synthetic acceptance environment is configured, but this source-only evidence does not prove it was consumed or expose accepted/draft token counts."
+    },
+    {
+      "subject": "actual_per_request_worker_routing_and_cache_reads",
+      "reason": "The recipe enables metrics/cache reporting but does not contain observed request-level routing or cache-read values."
+    },
+    {
+      "subject": "per_request_gpu_affinity_or_gpu_count",
+      "reason": "The shared 32-H200 topology cannot be attributed to individual conversation IDs from configuration evidence."
+    }
+  ],
+  "reproduction_commands": [
+    "gh api repos/SemiAnalysisAI/InferenceX/actions/runs/31235207041",
+    "gh api 'repos/SemiAnalysisAI/InferenceX/actions/runs/31235207041/jobs?per_page=100' --paginate",
+    "gh api repos/SemiAnalysisAI/InferenceX/pulls/2529",
+    "gh api -H 'Accept: application/vnd.github.raw+json' 'repos/SemiAnalysisAI/InferenceX/contents/benchmarks/multi_node/srt-slurm-recipes/sglang/glm5.2/agentic/disagg-h200-2p2d-pcp8-tp8-dp8-mtp.yaml?ref=48ec5aa103dbf8e671580cd191eeef7e7186c802'"
+  ]
+}

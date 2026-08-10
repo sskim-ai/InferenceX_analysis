@@ -1,0 +1,253 @@
+{
+  "schema_version": "h200_gpu_resident_mtp.runtime_log_evidence.v1",
+  "retrieved_at_utc": "2026-08-10T06:11:58Z",
+  "source_repository": "SemiAnalysisAI/InferenceX",
+  "github_actions_run_id": 31235207041,
+  "scope": "Startup, launcher, frontend-routing, and AIPerf benchmark logs embedded in the three downloaded server-log artifacts. Line references are one-based line numbers in the named member after streaming it from the inner tarball. This manifest does not calculate request-level benchmark metrics.",
+  "source_archives": [
+    {
+      "concurrency": 8,
+      "artifact_id": 9017974866,
+      "local_archive": "data/raw/h200_gpu_resident_mtp/conc8/server_logs/9017974866/multinode_server_logs.tar.gz",
+      "inner_archive_sha256": "110462a8f2ce00d3cbc868413785e691b2e57f6101188cbe93ede2183563f972",
+      "slurm_job_id": "67841",
+      "classification": "Evidence"
+    },
+    {
+      "concurrency": 12,
+      "artifact_id": 9019204997,
+      "local_archive": "data/raw/h200_gpu_resident_mtp/conc12/server_logs/9019204997/multinode_server_logs.tar.gz",
+      "inner_archive_sha256": "272433ad7a555469eb4e4dc3c3c988145cfdd12bbe04f0a5389b5b56ce232b86",
+      "slurm_job_id": "67842",
+      "classification": "Evidence"
+    },
+    {
+      "concurrency": 16,
+      "artifact_id": 9020479786,
+      "local_archive": "data/raw/h200_gpu_resident_mtp/conc16/server_logs/9020479786/multinode_server_logs.tar.gz",
+      "inner_archive_sha256": "9cc85ce67e0eec6e1f0948a8d2e6ebac234b3939c9d4583b19e7dd48b1ca9019",
+      "slurm_job_id": "67843",
+      "classification": "Evidence"
+    }
+  ],
+  "evidence": [
+    {
+      "subject": "backend_hardware_and_pd_topology",
+      "value": {
+        "gpu_type": "H200",
+        "backend_gpu_count": 32,
+        "configured_gpu_count_in_resource_snapshot": 40,
+        "backend_workers": 4,
+        "prefill_workers": 2,
+        "decode_workers": 2,
+        "backend_gpus_per_worker": 8
+      },
+      "details": "Each sweep log reports 32 backend GPUs and 40 configured GPUs on five nodes, then starts four worker processes and waits for 2 prefills plus 2 decodes. The c8 resource snapshot separately assigns 8 backend GPUs to each of four backend nodes.",
+      "references": [
+        {"concurrency": 8, "member": "sweep_67841.log", "lines": "111-117, 130-146, 173-175", "quote": "GPUs: 32 backend / 40 configured (8/node, h200)"},
+        {"concurrency": 12, "member": "sweep_67842.log", "lines": "111-117, 130-146, 173-175", "quote": "GPUs: 32 backend / 40 configured (8/node, h200)"},
+        {"concurrency": 16, "member": "sweep_67843.log", "lines": "112-118, 131-147, 174-176", "quote": "GPUs: 32 backend / 40 configured (8/node, h200)"},
+        {"concurrency": 8, "member": "resource_snapshot.json", "json_path": "gpus; cpus.backend_node_allocations", "quote": "backend_total: 32; four backend nodes each have backend_gpus: 8"}
+      ],
+      "classification": "Evidence"
+    },
+    {
+      "subject": "effective_prefill_server_flags",
+      "value": {
+        "disaggregation_mode": "prefill",
+        "transfer_backend": "mooncake",
+        "tp_size": 8,
+        "attn_cp_size": 8,
+        "enable_prefill_cp": true,
+        "kv_cache_dtype": "fp8_e4m3",
+        "context_length": 1048576,
+        "max_total_tokens": 1048576,
+        "max_running_requests": 32,
+        "speculative_algorithm": "EAGLE",
+        "speculative_num_steps": 3,
+        "speculative_eagle_topk": 1,
+        "speculative_num_draft_tokens": 4
+      },
+      "details": "The actual launcher command and resulting ServerArgs agree for the named flags on both prefill workers in every concurrency.",
+      "references": [
+        {"concurrency": 8, "member": "sweep_67841.log", "lines": "130-136", "quote": "--attn-cp-size 8 ... --enable-prefill-cp ... --tp-size 8"},
+        {"concurrency": 12, "member": "sweep_67842.log", "lines": "130-136", "quote": "--attn-cp-size 8 ... --enable-prefill-cp ... --tp-size 8"},
+        {"concurrency": 16, "member": "sweep_67843.log", "lines": "131-137", "quote": "--attn-cp-size 8 ... --enable-prefill-cp ... --tp-size 8"},
+        {"concurrency": "all", "member": "worker-*_prefill_w0.out", "lines": "36", "quote": "server_args includes kv_cache_dtype='fp8_e4m3', tp_size=8, attn_cp_size=8, enable_prefill_cp=True"}
+      ],
+      "classification": "Evidence"
+    },
+    {
+      "subject": "effective_decode_server_flags_and_kv_residency_controls",
+      "value": {
+        "disaggregation_mode": "decode",
+        "transfer_backend": "mooncake",
+        "tp_size": 8,
+        "dp_size": 8,
+        "enable_dp_attention": true,
+        "kv_cache_dtype": "fp8_e4m3",
+        "page_size": 64,
+        "context_length": 1048576,
+        "max_total_tokens": 1048576,
+        "max_running_requests": 200,
+        "disable_radix_cache": true,
+        "enable_hisparse": false,
+        "cpu_offload_gb": 0,
+        "enable_lmcache": false,
+        "disaggregation_decode_enable_offload_kvcache": false,
+        "decode_cache_mode_logged": "chunk cache"
+      },
+      "details": "The startup logs are direct runtime evidence that HiSparse is disabled and that the configured CPU/offload and LMCache paths are disabled. They also record that the decode server forces the KV cache to chunk-cache mode.",
+      "references": [
+        {"concurrency": 8, "member": "sweep_67841.log", "lines": "138-145", "quote": "--disable-radix-cache ... --dp-size 8 ... --kv-cache-dtype fp8_e4m3 ... --page-size 64 ... --tp-size 8"},
+        {"concurrency": 12, "member": "sweep_67842.log", "lines": "138-145", "quote": "--disable-radix-cache ... --dp-size 8 ... --kv-cache-dtype fp8_e4m3 ... --page-size 64 ... --tp-size 8"},
+        {"concurrency": 16, "member": "sweep_67843.log", "lines": "139-146", "quote": "--disable-radix-cache ... --dp-size 8 ... --kv-cache-dtype fp8_e4m3 ... --page-size 64 ... --tp-size 8"},
+        {"concurrency": "all", "member": "worker-*_decode_w0.out", "lines": "16", "quote": "KV cache is forced as chunk cache for decode server"},
+        {"concurrency": "all", "member": "worker-*_decode_w0.out", "lines": "36", "quote": "server_args includes enable_hisparse=False, cpu_offload_gb=0, enable_lmcache=False, disaggregation_decode_enable_offload_kvcache=False"}
+      ],
+      "classification": "Evidence"
+    },
+    {
+      "subject": "prefill_kv_runtime_allocation",
+      "value": {
+        "dtype_recorded": "torch.float8_e4m3fn",
+        "logical_token_limit": 1048576,
+        "scheduler_kv_blocks": 16384,
+        "page_size": 64,
+        "max_running_requests": 32,
+        "observed_primary_rank_allocation_gb": [6.93, 7.7],
+        "observed_secondary_rank_allocation_gb": 0.77,
+        "post_allocation_available_memory_gb_observed_range": [24.42, 26.44]
+      },
+      "scope": "The allocation records are emitted by individual ATTN_CP/TP ranks in one 8-GPU prefill worker. The scheduler block total is a logical prefill-pool value for that worker, not a global 16-GPU total.",
+      "references": [
+        {"concurrency": 8, "member": "worker-9_prefill_w0.out", "lines": "544-575", "quote": "KV Cache is allocated. dtype: torch.float8_e4m3fn, #tokens: 1048576, KV size: 6.93 GB / 7.70 GB / 0.77 GB"},
+        {"concurrency": 8, "member": "worker-9_prefill_w0.out", "lines": "581", "quote": "max_total_num_tokens=1048576 ... max_running_requests=32 ... available_gpu_mem=24.82 GB"},
+        {"concurrency": 8, "member": "worker-9_prefill_w0.out", "lines": "691", "quote": "Got total KV blocks from scheduler: 16384 (max_total_tokens=1048576, page_size=64)"},
+        {"concurrency": 12, "member": "worker-5_prefill_w0.out", "lines": "544-575, 599, 691", "quote": "same FP8 allocation values; max_total_num_tokens=1048576; 16384 scheduler blocks"},
+        {"concurrency": 16, "member": "worker-5_prefill_w0.out", "lines": "544-575, 603, 691", "quote": "same FP8 allocation values; max_total_num_tokens=1048576; 16384 scheduler blocks"}
+      ],
+      "classification": "Evidence"
+    },
+    {
+      "subject": "decode_kv_runtime_allocation",
+      "value": {
+        "dtype_recorded": "torch.float8_e4m3fn",
+        "configured_max_total_tokens": 1048576,
+        "runtime_profiled_token_value": 218560,
+        "observed_primary_rank_allocation_gb": 12.51,
+        "observed_secondary_rank_allocation_gb": 0.16,
+        "post_allocation_available_memory_gb_observed_range": [18.98, 19.38]
+      },
+      "scope": "The values are direct allocation records for each logged DP/TP rank in one decode worker. Two allocation sizes are emitted per rank under DSA; they are retained separately rather than summed or multiplied into a claimed physical cluster total.",
+      "references": [
+        {"concurrency": 8, "member": "worker-4_decode_w0.out", "lines": "528-567", "quote": "max_total_tokens=1048576 is larger than the profiled value 218560 ... KV Cache is allocated ... #tokens: 218560, KV size: 12.51 GB ... 0.16 GB"},
+        {"concurrency": 12, "member": "worker-8_decode_w0.out", "lines": "528-567", "quote": "same FP8 profile value 218560 and 12.51 GB plus 0.16 GB allocation records"},
+        {"concurrency": 16, "member": "worker-8_decode_w0.out", "lines": "528-567", "quote": "same FP8 profile value 218560 and 12.51 GB plus 0.16 GB allocation records"}
+      ],
+      "classification": "Evidence"
+    },
+    {
+      "subject": "mtp_launch_and_runtime_behavior",
+      "value": {
+        "algorithm": "EAGLE",
+        "speculative_num_steps": 3,
+        "speculative_eagle_topk": 1,
+        "speculative_num_draft_tokens": 4,
+        "simulate_acceptance_length": "2.99",
+        "simulate_acceptance_method": "match-expected",
+        "simulate_acceptance_token_mode": "real-draft-token",
+        "runtime_decode_batch_sample_accept_length_range": [2.98, 3.0],
+        "runtime_decode_batch_sample_accept_rate_range": [0.66, 0.67]
+      },
+      "scope": "The acceptance values are sampled decode-batch status lines, not a request-weighted or run-wide acceptance estimate. The server-reported generation throughput in those same status lines is not used as the benchmark's weighted decode TPS.",
+      "references": [
+        {"concurrency": 8, "member": "sweep_67841.log", "lines": "139, 143", "quote": "SGLANG_SIMULATE_ACC_LEN=2.99 SGLANG_SIMULATE_ACC_METHOD=match-expected SGLANG_SIMULATE_ACC_TOKEN_MODE=real-draft-token"},
+        {"concurrency": 12, "member": "sweep_67842.log", "lines": "139, 143", "quote": "SGLANG_SIMULATE_ACC_LEN=2.99 SGLANG_SIMULATE_ACC_METHOD=match-expected SGLANG_SIMULATE_ACC_TOKEN_MODE=real-draft-token"},
+        {"concurrency": 16, "member": "sweep_67843.log", "lines": "140, 144", "quote": "SGLANG_SIMULATE_ACC_LEN=2.99 SGLANG_SIMULATE_ACC_METHOD=match-expected SGLANG_SIMULATE_ACC_TOKEN_MODE=real-draft-token"},
+        {"concurrency": 8, "member": "worker-4_decode_w0.out", "lines": "1071-1074", "quote": "accept len: 3.00, accept rate: 0.67"},
+        {"concurrency": 12, "member": "worker-8_decode_w0.out", "lines": "1073-1076", "quote": "accept len: 2.98/3.00, accept rate: 0.66/0.67"},
+        {"concurrency": 16, "member": "worker-8_decode_w0.out", "lines": "1076-1079", "quote": "accept len: 2.98/3.00, accept rate: 0.66/0.67"}
+      ],
+      "classification": "Evidence"
+    },
+    {
+      "subject": "dynamic_worker_routing",
+      "value": {
+        "router": "Dynamo KV router",
+        "observable_fields": ["prefill worker ID", "decode worker ID", "decode dp_rank", "effective cached blocks", "host_pinned blocks", "disk blocks"],
+        "routing_behavior": "frontend logs select both prefill workers and both decode workers; decode selections span DP ranks"
+      },
+      "scope": "This is direct evidence of dynamic selection, not an aggregate request-count or balance calculation. Request-level worker distribution should be computed from the canonical request table where available.",
+      "references": [
+        {"concurrency": 8, "member": "worker-7_frontend_2.out", "lines": "148-161", "quote": "selected prefill worker IDs ...2787 and ...2789; selected decode worker IDs ...2792 and ...2795, with DP ranks 0/1/5"},
+        {"concurrency": 12, "member": "worker-8_frontend_1.out", "lines": "120-131", "quote": "selected prefill worker IDs ...6338 and ...6341; decode IDs ...6344 and ...6346, with multiple DP ranks"},
+        {"concurrency": 16, "member": "worker-9_frontend_0.out", "lines": "150-167", "quote": "selected prefill worker IDs ...3330 and ...3333; decode IDs ...3336 and ...3338, with multiple DP ranks"}
+      ],
+      "classification": "Evidence"
+    },
+    {
+      "subject": "aiperf_cache_read_telemetry_availability",
+      "value": {
+        "usage_prompt_tokens_details_cached_tokens_observed": false,
+        "aiperf_warning_present": true,
+        "enable_cache_report_in_server_args": true
+      },
+      "scope": "This says the AIPerf benchmark log did not observe the named request-usage cache-read field. It does not prove no prefix reuse, no KV transfer, or no cache activity occurred.",
+      "references": [
+        {"concurrency": 8, "member": "benchmark.out", "lines": "437-438", "quote": "no prompt-cache read tokens were seen (usage.prompt_tokens_details.cached_tokens absent)"},
+        {"concurrency": 12, "member": "benchmark.out", "lines": "447-448", "quote": "no prompt-cache read tokens were seen (usage.prompt_tokens_details.cached_tokens absent)"},
+        {"concurrency": 16, "member": "benchmark.out", "lines": "458-459", "quote": "no prompt-cache read tokens were seen (usage.prompt_tokens_details.cached_tokens absent)"}
+      ],
+      "classification": "Evidence"
+    }
+  ],
+  "inferences": [
+    {
+      "subject": "effective_prefill_parallelism_resolution",
+      "value": "The runtime authority resolves the source-level TP1/PCP8 versus recipe discrepancy in favor of an effective prefill launch with --tp-size 8, --attn-cp-size 8, and --enable-prefill-cp.",
+      "confidence": "high",
+      "basis": "All three actual sweep launch commands and the corresponding ServerArgs contain those flags.",
+      "caveat": "This inference only resolves launch flags; it does not establish a per-request GPU affinity."
+    },
+    {
+      "subject": "gpu_resident_decode_kv",
+      "value": "The runtime evidence strongly supports GPU-resident decode KV for this run.",
+      "confidence": "high",
+      "basis": "Decode ServerArgs report fp8_e4m3 KV, enable_hisparse=False, cpu_offload_gb=0, enable_lmcache=False, and decode KV offload disabled; the decode process then logs CUDA KV allocations.",
+      "caveat": "The log does not provide an unambiguous physical per-GPU accounting label for both DSA allocation components."
+    },
+    {
+      "subject": "mtp_was_active_in_replay",
+      "value": "MTP/EAGLE and the synthetic acceptance configuration were active in the decode process during replay, rather than merely present in source YAML.",
+      "confidence": "high",
+      "basis": "The environment is printed at actual decode launch and subsequent decode-batch lines emit acceptance length/rate near the configured 2.99 length.",
+      "caveat": "This does not quantify total accepted or drafted tokens for the whole benchmark."
+    },
+    {
+      "subject": "per_gpu_decode_kv_estimate",
+      "value": "A logged decode rank records 12.51 GB plus a distinct 0.16 GB FP8 allocation after profiling, or 12.67 GB if the two lines are additive.",
+      "confidence": "medium",
+      "basis": "Each DP/TP rank on an 8-GPU backend worker logs both allocation lines.",
+      "caveat": "The DSA layer-split allocation semantics and rank-to-physical-GPU mapping are not explicitly labelled as an aggregate 'per GPU KV total'; preserve the two components in analysis outputs."
+    }
+  ],
+  "unknown": [
+    {
+      "subject": "physical_kv_pool_accounting",
+      "reason": "The logs do not label whether the 6.93/7.70 GB plus 0.77 GB prefill components, or 12.51 GB plus 0.16 GB decode components, should be summed as one physical per-GPU pool or have another DSA layer-split scope. They also do not supply a single global HBM/KV-pool total."
+    },
+    {
+      "subject": "run_wide_mtp_counters",
+      "reason": "The inspected logs contain configured acceptance controls and sampled batch acceptance fields, but no canonical run-wide accepted-token total, draft-token total, or request-weighted acceptance estimate."
+    },
+    {
+      "subject": "request_level_cache_read_tokens",
+      "reason": "AIPerf explicitly reports usage.prompt_tokens_details.cached_tokens as absent for all three concurrencies. Server-status prefix-cache samples are not a substitute for per-request cache-read tokens."
+    },
+    {
+      "subject": "worker_load_balance_and_per_request_gpu_attribution",
+      "reason": "Frontend logs demonstrate routing across workers and DP ranks, but the evidence here does not count complete routing assignments. A conversation/request must not be attributed to a fixed H200 GPU."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "all_record_count": 3393,
+  "excluded_record_count": 395,
+  "malformed_jsonl_line_count": 0,
+  "observed_raw_field_path_count": 6,
+  "profile_export_count": 3,
+  "profiled_record_count": 2998,
+  "raw_root": "data/raw/h200_gpu_resident_mtp",
+  "schema_inventory_issue_count": 0,
+  "status": "completed",
+  "streamed_record_count": 3393
+}

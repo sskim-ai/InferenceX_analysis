@@ -1,0 +1,4 @@
+system,gpu_count,topology,concurrency,context,kv_mode,hisparse,mtp,comparison_status
+A: user-reported local reference,2,aggregated,1,202752,inference_gpu_resident_unverified,inference_off_unverified,Unknown,contextual reference only; no raw local logs
+B: public H200 HiSparse,16,1P×8 + 1D×8,8,1048576,HiSparse / host-pinned full decode KV per baseline provenance,on,off,same-concurrency observed-system comparison available
+C: public H200 GPU-resident MTP,32,2P×8 + 2D×8,"8,12,16",1048576,runtime evidence: FP8 GPU-resident controls; CPU/KV offload and LMCache disabled,runtime evidence: OFF (enable_hisparse=false),runtime evidence: EAGLE MTP with simulated acceptance,primary study

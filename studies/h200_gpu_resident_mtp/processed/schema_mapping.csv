@@ -1,0 +1,31 @@
+canonical_field,requested_mapping,observed_raw_field_paths,mapping_status,interpretation
+root_trace_id,metadata.source_trace_id preferred; otherwise conversation ID normalization,metadata.source_trace_id/conversation_id normalization,observed,ID provenance
+source_trace_id,metadata.source_trace_id,metadata.source_trace_id,observed,loader source ID
+conversation_id,metadata.conversation_id,metadata.conversation_id,observed,replay branch identifier
+session_num,metadata.session_num,metadata.session_num,observed,opaque replay/session field
+turn_index,metadata.turn_index,metadata.turn_index,observed,replay turn field
+source_outer_idx,metadata.source_outer_idx,metadata.source_outer_idx,observed,source request index
+source_inner_idx,metadata.source_inner_idx,metadata.source_inner_idx,observed,nested source request index
+source_conversation_path,joined source request metadata,source table join,observed,source branch path
+source_branch_type,joined source request metadata,source table join,observed,root/subagent origin
+benchmark_phase,metadata.benchmark_phase,metadata.benchmark_phase,observed,profiling/warmup label
+request_start_ns,metadata.request_start_ns,metadata.request_start_ns,observed,replay timestamp
+request_ack_ns,metadata.request_ack_ns,metadata.request_ack_ns,observed,replay timestamp
+request_end_ns,metadata.request_end_ns,metadata.request_end_ns,observed,replay timestamp
+worker_id,metadata.worker_id,metadata.worker_id,observed,observed request worker ID
+correlation_id,metadata.x_correlation_id,metadata.x_correlation_id,observed,request correlation ID
+was_cancelled,metadata.was_cancelled,metadata.was_cancelled,observed,cancellation status
+error_present,error/status derived flag,derived from error/status,observed,parsed error condition
+input_sequence_length,metrics.input_sequence_length.value,metrics.input_sequence_length.value,observed,AIPerf metric; not asserted logical prompt
+usage_prompt_tokens,metrics.usage_prompt_tokens.value,metrics.usage_prompt_tokens.value,observed,AIPerf usage field; semantics independently unvalidated
+logical_prompt_tokens,explicit logical/frontend metric only,,not_exported_or_not_mapped,logical prompt only if explicitly exported
+cache_read_tokens,explicit cache-read metric only,metrics.usage_prompt_cache_read_tokens.value,observed,actual cache load only if explicitly exported
+new_prompt_tokens,logical_prompt_tokens - cache_read_tokens,,not_exported_or_not_mapped,derived only when both operands exist
+output_sequence_length,metrics.output_sequence_length.value,metrics.output_sequence_length.value,observed,AIPerf output metric
+ttft_ms,metrics.time_to_first_token.value,metrics.time_to_first_token.value,observed,observed H200 replay latency
+itl_ms,metrics.inter_token_latency.value,metrics.inter_token_latency.value,observed,request-level ITL/TPOT metric
+e2e_ms,metrics.request_latency.value,metrics.request_latency.value,observed,observed H200 replay latency
+mtp_accepted_tokens,explicit MTP metric only,,not_exported_or_not_mapped,actual MTP counter only if exported
+mtp_draft_tokens,explicit MTP metric only,,not_exported_or_not_mapped,actual MTP counter only if exported
+mtp_acceptance_length,explicit MTP metric only,,not_exported_or_not_mapped,actual MTP counter only if exported
+mtp_acceptance_rate,explicit MTP metric only,,not_exported_or_not_mapped,actual MTP counter only if exported

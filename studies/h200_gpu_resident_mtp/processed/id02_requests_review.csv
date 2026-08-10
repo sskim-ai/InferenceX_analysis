@@ -1,0 +1,1 @@
+concurrency,root_trace_id,conversation_id,source_outer_idx,source_inner_idx,turn_index,worker_id,input_sequence_length,logical_prompt_tokens,cache_read_tokens,new_prompt_tokens,output_tokens,ttft_ms,itl_ms,e2e_ms,match_class

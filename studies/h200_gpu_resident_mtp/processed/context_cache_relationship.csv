@@ -1,0 +1,10 @@
+concurrency,relationship,sample_count,spearman_rho,interpretation
+8,source_input_tokens_vs_ttft_ms,957,0.435951720167249,source workload input token count; may differ from AIPerf input sequence length
+8,theoretical_new_tokens_vs_ttft_ms,932,0.11645892312216592,source-workload theoretical cache shape; not actual H200 cache residency
+8,theoretical_cache_ratio_vs_ttft_ms,932,0.12355406980170516,source-workload theoretical cache shape; not actual H200 cache residency
+12,source_input_tokens_vs_ttft_ms,1072,0.2491211231638382,source workload input token count; may differ from AIPerf input sequence length
+12,theoretical_new_tokens_vs_ttft_ms,1050,0.027767680425974495,source-workload theoretical cache shape; not actual H200 cache residency
+12,theoretical_cache_ratio_vs_ttft_ms,1050,0.09950586057844668,source-workload theoretical cache shape; not actual H200 cache residency
+16,source_input_tokens_vs_ttft_ms,969,0.17930757259835853,source workload input token count; may differ from AIPerf input sequence length
+16,theoretical_new_tokens_vs_ttft_ms,947,-0.004185479944216575,source-workload theoretical cache shape; not actual H200 cache residency
+16,theoretical_cache_ratio_vs_ttft_ms,947,0.10071033831546648,source-workload theoretical cache shape; not actual H200 cache residency
