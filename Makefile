@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PYTHON ?= .venv/bin/python
 CONFIG := configs/run_29820102138.yaml
 
-.PHONY: bootstrap preflight acquire-run acquire-traces inspect build-source build-h200 join coverage analyze-ids analyze-concurrency validate figures report test lint secret-scan all
+.PHONY: bootstrap preflight acquire-run acquire-traces inspect build-source build-h200 join coverage analyze-ids analyze-concurrency validate figures report test lint secret-scan all mtp-acquire mtp-analyze mtp-report mtp-all
 
 bootstrap:
 	bash scripts/bootstrap.sh
@@ -55,6 +55,21 @@ lint:
 
 secret-scan:
 	$(PYTHON) scripts/secret_scan.py
+
+# Study B: public 32×H200 GPU-resident KV + MTP run.  Acquisition is kept
+# separate because it requires authenticated `gh` access and downloads raw
+# artifacts intentionally excluded from Git.
+mtp-acquire:
+	$(PYTHON) scripts/h200_gpu_resident_mtp/acquire.py --download
+
+mtp-analyze:
+	$(PYTHON) scripts/h200_gpu_resident_mtp/analyze.py
+
+mtp-report:
+	mkdir -p .mplconfig
+	MPLCONFIGDIR=$(CURDIR)/.mplconfig $(PYTHON) scripts/h200_gpu_resident_mtp/build_reports.py
+
+mtp-all: mtp-analyze mtp-report
 
 all: preflight
 	$(MAKE) acquire-run

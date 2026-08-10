@@ -1,0 +1,7 @@
+concurrency,source_branch_type,profiled_request_count,root_id_count,input_sequence_length_total,output_tokens_total,ttft_median_ms,ttft_p90_ms,itl_weighted_ms,weighted_decode_tps,e2e_median_ms,wall_output_tps,scope
+8,root,518,14,45605200.0,497789.0,2194.8918125,20816.7432156,10.758683759356568,92.94817306348689,10146.359677,137.7517889739782,source branch origin joined through loader metadata; not replay suffix taxonomy
+8,subagent,439,7,33509664.0,262905.0,1195.631785,10757.944403599999,10.917329174845502,91.59749458723742,5590.29403,82.10886179780489,source branch origin joined through loader metadata; not replay suffix taxonomy
+12,root,623,19,58480450.0,624173.0,7637.544830999999,42367.992098200026,10.904533099148424,91.70498093844053,17099.443032,173.20766255790997,source branch origin joined through loader metadata; not replay suffix taxonomy
+12,subagent,449,7,34970555.0,251322.0,1976.779014,30963.969205199985,11.078640428826539,90.26378339692364,6409.401937,76.7299203483012,source branch origin joined through loader metadata; not replay suffix taxonomy
+16,root,640,24,61365467.0,654980.0,24643.308446999996,88062.00351580001,10.8960928381774,91.77601685773365,33776.21932999999,180.51560082639077,source branch origin joined through loader metadata; not replay suffix taxonomy
+16,subagent,329,8,25900449.0,204631.0,16451.647272,82170.8598884,10.947423371983632,91.34569533130276,22800.057118999997,57.47689315246456,source branch origin joined through loader metadata; not replay suffix taxonomy

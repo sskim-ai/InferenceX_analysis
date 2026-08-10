@@ -1,0 +1,22 @@
+field,value,classification,source
+target_model,zai-org/GLM-5.2-FP8,Evidence,at-run recipe
+hardware,H200,Evidence,at-run recipe and server logs
+total_gpus,32 backend H200 (2×8 prefill + 2×8 decode; 40 configured GPUs includes non-backend allocation),Evidence,server logs/resource snapshot
+serving,P/D disaggregated with Mooncake,Evidence,at-run recipe and server logs
+kv_cache_dtype,fp8_e4m3,Evidence,runtime decode ServerArgs
+kv_offloading,none (CPU offload=0; decode KV offload=false; LMCache=false),Evidence,runtime decode ServerArgs
+hisparse,OFF (enable_hisparse=false),Evidence,runtime decode ServerArgs
+context_length,1048576,Evidence,at-run recipe and server logs
+decode_page_size,64,Evidence,runtime decode ServerArgs
+decode_max_running_requests,200,Evidence,at-run recipe
+mtp,EAGLE steps=3 topk=1 draft_tokens=4,Evidence,at-run recipe and server logs
+simulated_acceptance,2.99; match-expected; real-draft-token,Evidence,runtime server log
+runtime_backend_gpu_count,32,Evidence,backend GPU count
+runtime_prefill_workers,2,Evidence,server log
+runtime_decode_workers,2,Evidence,server log
+runtime_prefill_tp_size,8,Evidence,server log resolves matrix/recipe discrepancy
+runtime_prefill_attn_cp_size,8,Evidence,server log
+runtime_decode_kv_dtype,fp8_e4m3,Evidence,server log
+runtime_enable_hisparse,False,Evidence,server log
+runtime_cpu_offload_gb,0,Evidence,server log
+runtime_decode_kv_offload,False,Evidence,server log
