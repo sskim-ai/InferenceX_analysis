@@ -1,0 +1,5 @@
+scope,source_branch_type,request_count,ttft_median_ms,ttft_p90_ms,e2e_median_ms,e2e_p90_ms,weighted_itl_ms,weighted_decode_tps,system_inflight_at_start_median,system_inflight_at_start_p90,metric_scope
+all_c8,root,518,2194.8918125,20816.7432156,10146.359677,40657.4582925,10.758683759356568,92.94817306348689,4.0,7.0,source branch origin; not backend worker/GPU affinity
+all_c8,subagent,439,1195.631785,10757.944403599999,5590.29403,25176.278272199997,10.917329174845502,91.59749458723742,5.0,8.0,source branch origin; not backend worker/GPU affinity
+id03_c8,root,9,1155.2709109999998,3317.0824894000007,4624.446502,44713.2752622,10.507160060442908,95.17319563492468,3.0,4.4,source branch origin; not backend worker/GPU affinity
+id03_c8,subagent,110,1071.7678445,3316.3814691000007,3503.7049755,7217.621098600006,11.25028830579647,88.8866109755402,5.0,8.0,source branch origin; not backend worker/GPU affinity

@@ -1,0 +1,4 @@
+inflight_bucket,request_count,ttft_median_ms,ttft_p90_ms,e2e_median_ms,itl_sample_count,weighted_itl_ms,weighted_decode_tps,metric_scope
+1-4,41,1179.590183,2978.89506,3370.775608,41,10.7113741880493,93.35870285585783,"ID03 public c8; request-start HTTP overlap bucket, not scheduler running"
+5-8,68,1044.9217749999998,3560.664008700002,3640.5590899999997,68,11.403441232043182,87.69282707311568,"ID03 public c8; request-start HTTP overlap bucket, not scheduler running"
+9-12,10,1033.707796,2597.2024196999973,3621.858433,10,11.527794841229838,86.74685954883938,"ID03 public c8; request-start HTTP overlap bucket, not scheduler running"

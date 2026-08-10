@@ -101,6 +101,52 @@
 - **Unknown:** public profile에는 request-level target logical prompt token 및 requested output limit이 없어 202,752 context-compatible exact subset은 unavailable이다. input_sequence_length 또는 source_input_tokens로 대체하지 않는다.
 - **Unknown:** 사내 cpy1~cpy8 수치는 이 repository에 없으며 생성하지 않았다. 이후 계약은 handoff/id03_local_join_contract.md와 reports/12_id03_local_cpy_comparison_plan.md를 따른다.
 
+# c8 offered load 및 scheduler 재구성
+
+## Evidence
+
+| metric | value | status | evidence_scope | notes |
+| --- | --- | --- | --- | --- |
+| agentx_root_concurrency_configured | 8 | Evidence | AIPerf c8 command / trajectory lanes | Configured root-trajectory lane count; not HTTP or scheduler running count. |
+| http_max_inflight | 11 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_mean_inflight | 3.968259088179123 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p50_inflight | 4.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p75_inflight | 5.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p90_inflight | 7.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p95_inflight | 8.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p99_inflight | 9.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_max_root_inflight | 7 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_max_subagent_inflight | 7 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_mean_root_inflight | 2.587678942023965 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_mean_subagent_inflight | 1.3805801461551577 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_8 | 0.05264858957537656 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_12 | 0.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_16 | 0.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_24 | 0.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_32 | 0.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| prefill_configured_max_running | 32 | Evidence | public startup ServerArgs / runtime evidence | Configured capacity, not observed runtime running-request count. |
+| decode_configured_max_running | 200 | Evidence | public startup ServerArgs / runtime evidence | Configured capacity, not observed runtime running-request count. |
+| prefill_observed_max_running | 5.0 | Evidence | AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series | Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total. |
+| prefill_observed_max_waiting | 5.0 | Evidence | AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series | Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total. |
+| decode_observed_max_running | 2.0 | Evidence | AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series | Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total. |
+| decode_observed_max_waiting | 0.0 | Evidence | AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series | Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total. |
+| router_queue_wait_checkpoint_profile_request_count | 18 | Evidence | exact frontend router request ID -> x_request_id -> profiling row join | Long-wait refresh checkpoints are not final scheduler queue time. |
+| router_queue_wait_checkpoint_max_ms | 27520.0 | Evidence | exact frontend router request ID -> x_request_id -> profiling row join | Long-wait refresh checkpoint, not full per-request queue decomposition. |
+| h200_explicit_queue_time | aggregate_scheduler_histogram_and_router_checkpoints_available | Evidence | SGLang queue_time_seconds rank-series histogram plus exact long-wait router checkpoint events | No complete request-level scheduler lifecycle join exists; TTFT cannot be decomposed into queue versus execution. |
+| routing_exact_profile_join_count | 957 | Evidence | raw profile x_request_id -> frontend request-completed log | Dynamo worker routing only, not GPU affinity. |
+
+- HTTP in-flight는 957개 successful profiling request의 `[start, end)` interval overlap이며, SGLang running 수나 GPU sequence 수가 아니다. 동일 timestamp에서는 end를 start보다 먼저 처리했다.
+- server-metrics export에는 prefill/decode의 explicit rank-series `num_running_reqs` 및 `num_queue_reqs`가 있으나, rank 값을 worker/cluster 합계로 더하지 않았다.
+
+## Inference
+
+- AgentX c8은 root trajectory lane=8 설정이다. 관측 HTTP interval maximum이 8을 넘으므로 c8을 ‘동시 HTTP request 8개’라고 읽을 수 없다.
+- ID03의 TTFT와 request-start HTTP overlap의 Spearman 결과는 descriptive이며 queueing의 causal proof가 아니다.
+
+## Unknown
+
+- global scheduler saturation, worker/cluster total running request, request-level queue time, 그리고 GPU affinity는 공개 자료만으로 확정할 수 없다. Aggregate queue counter와 일부 Dynamo long-wait checkpoint는 존재하지만 TTFT를 queue/execution으로 분해하지 않는다. 상세은 reports/13_c8_concurrency_scheduler_reconstruction.md를 따른다.
+
 # Concurrency c8 / c12 / c16 비교
 
 - 이 study의 public run은 c8/c12/c16이며, 고정 시간 replay이므로 coverage를 동반해 비교한다.

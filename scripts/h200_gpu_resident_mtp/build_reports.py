@@ -237,6 +237,9 @@ def _build_reports(
     )
     _write_id03_deep_dive(reports / "11_id03_deep_dive.md", tables)
     _write_id03_local_cpy_plan(reports / "12_id03_local_cpy_comparison_plan.md", tables)
+    _write_c8_concurrency_scheduler_report(
+        reports / "13_c8_concurrency_scheduler_reconstruction.md", tables
+    )
     _write_korean_summary(reports / "results_summary_ko.md", tables, recipe, runtime)
 
 
@@ -574,6 +577,395 @@ def _write_id03_local_cpy_plan(path: Path, tables: dict[str, pd.DataFrame]) -> N
     _write(path, text)
 
 
+def _c8_summary_metric(tables: dict[str, pd.DataFrame], metric: str) -> str:
+    """Return a display-safe reconstruction summary value without hard-coding a result."""
+
+    frame = tables.get("c8_concurrency_reconstruction_summary", pd.DataFrame())
+    if frame.empty or not {"metric", "value"}.issubset(frame.columns):
+        return "Unknown"
+    matches = frame.loc[frame["metric"].astype("string") == metric, "value"]
+    if matches.empty or pd.isna(matches.iloc[0]):
+        return "Unknown"
+    return _cell(matches.iloc[0])
+
+
+def _c8_scheduler_key_rows(frame: pd.DataFrame) -> pd.DataFrame:
+    """Keep only scheduler counters that answer pressure questions in the report."""
+
+    if frame.empty:
+        return frame
+    metric_column = "metric" if "metric" in frame else "candidate_metric_name"
+    if metric_column not in frame:
+        return frame
+    names = {
+        "sglang:num_running_reqs",
+        "sglang:num_queue_reqs",
+        "sglang:num_prefill_inflight_queue_reqs",
+        "sglang:num_prefill_bootstrap_queue_reqs",
+        "sglang:num_decode_prealloc_queue_reqs",
+        "sglang:num_decode_transfer_queue_reqs",
+        "sglang:queue_time_seconds",
+    }
+    return frame.loc[frame[metric_column].astype("string").isin(names)].copy()
+
+
+def _write_c8_concurrency_scheduler_report(path: Path, tables: dict[str, pd.DataFrame]) -> None:
+    """Render public c8 offered-load evidence without equating it to backend execution."""
+
+    summary = tables.get("c8_concurrency_reconstruction_summary", pd.DataFrame())
+    http = tables.get("c8_http_concurrency_summary", pd.DataFrame())
+    origin = tables.get("c8_root_subagent_offered_load_summary", pd.DataFrame())
+    relationship = tables.get("id03_c8_load_latency_relationship", pd.DataFrame())
+    buckets = tables.get("id03_c8_load_buckets", pd.DataFrame())
+    inventory = tables.get("c8_scheduler_metric_inventory", pd.DataFrame())
+    prefill = tables.get("c8_prefill_scheduler_summary", pd.DataFrame())
+    decode = tables.get("c8_decode_scheduler_summary", pd.DataFrame())
+    routing = tables.get("c8_backend_worker_routing_summary", pd.DataFrame())
+    checkpoints = tables.get("c8_router_queue_wait_checkpoint_summary", pd.DataFrame())
+
+    http_max = _c8_summary_metric(tables, "http_max_inflight")
+    http_mean = _c8_summary_metric(tables, "http_time_weighted_mean_inflight")
+    http_p90 = _c8_summary_metric(tables, "http_time_weighted_p90_inflight")
+    http_p95 = _c8_summary_metric(tables, "http_time_weighted_p95_inflight")
+    root_max = _c8_summary_metric(tables, "http_max_root_inflight")
+    subagent_max = _c8_summary_metric(tables, "http_max_subagent_inflight")
+    prefill_running = _c8_summary_metric(tables, "prefill_observed_max_running")
+    prefill_waiting = _c8_summary_metric(tables, "prefill_observed_max_waiting")
+    decode_running = _c8_summary_metric(tables, "decode_observed_max_running")
+    decode_waiting = _c8_summary_metric(tables, "decode_observed_max_waiting")
+    queue_scope = _c8_summary_metric(tables, "h200_explicit_queue_time")
+    rho_ttft = _relationship_value(relationship, "system_inflight_at_start", "ttft_ms", "spearman_rho")
+    p_ttft = _relationship_value(relationship, "system_inflight_at_start", "ttft_ms", "p_value")
+    n_ttft = _relationship_value(relationship, "system_inflight_at_start", "ttft_ms", "sample_count")
+
+    text = "# 13. c8 concurrency and scheduler reconstruction\n\n"
+    text += "## Scope\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        "- This report uses only public run 31235207041 c8 profiling records, the public "
+        "AIPerf server-metrics export, and public frontend/server logs. It contains no local or "
+        "internal-server measurements.\n"
+        "- The interval population is the 957 successful profiling requests with valid "
+        "`[request_start_ns, request_end_ns)` endpoints.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- These sources are sufficient to reconstruct client/profile observed offered-load overlap and "
+        "some rank-series scheduler counters, but not a single unified backend execution timeline.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- The public package does not expose a complete request-correlated scheduler lifecycle from "
+        "acceptance through prefill, decode admission, first token, and completion.\n\n"
+    )
+
+    text += "## Definitions\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        "- **AgentX root-trajectory lane concurrency:** c8 is the configured count of eight root "
+        "trajectory lanes; it is a workload-generator setting.\n"
+        "- **HTTP/client in-flight:** overlapping profile request intervals use `[start, end)` semantics. "
+        "At an equal timestamp, end events are processed before start events; a start-context value includes "
+        "all requests that start at that exact timestamp.\n"
+        "- **SGLang scheduler running/waiting:** explicit `sglang:*` values are aggregate samples in "
+        "endpoint/rank-export series. They are not summed across TP ranks into an unsupported worker or "
+        "cluster total.\n"
+        "- **Configured limits:** prefill `max_running_requests=32` and decode "
+        "`max_running_requests=200` are capacity settings, not measurements of runtime running requests.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- Neither a profile interval nor a Dynamo selected-worker routing ID proves GPU affinity, "
+        "backend batch membership, or a number of concurrent GPU sequences.\n\n"
+    )
+
+    text += "## HTTP offered-load reconstruction\n\n"
+    text += "### Evidence\n\n"
+    text += _table(
+        _select(
+            http,
+            [
+                "valid_interval_request_count",
+                "invalid_interval_request_count",
+                "observation_span_s",
+                "max_inflight",
+                "time_weighted_mean_inflight",
+                "time_weighted_p50_inflight",
+                "time_weighted_p75_inflight",
+                "time_weighted_p90_inflight",
+                "time_weighted_p95_inflight",
+                "time_weighted_p99_inflight",
+                "max_root_inflight",
+                "max_subagent_inflight",
+                "fraction_time_inflight_ge_8",
+                "fraction_time_inflight_ge_12",
+                "request_start_sampled_p50_inflight",
+                "request_start_sampled_p90_inflight",
+                "interval_semantics",
+                "same_timestamp_policy",
+            ],
+        )
+    ) + "\n\n"
+    text += _table(
+        _select(
+            summary,
+            [
+                "metric",
+                "value",
+                "status",
+                "evidence_scope",
+                "notes",
+            ],
+        ).loc[
+            lambda frame: frame.get("metric", pd.Series(dtype="string")).astype("string").str.startswith(
+                "http_"
+            )
+        ]
+        if not summary.empty
+        else summary
+    )
+    text += (
+        "\n\n- The reviewable event timeline is "
+        "`../processed/c8_http_inflight_timeline.csv`; the request-start context for all 957 profile "
+        "rows is `../processed/c8_requests_with_inflight_context.csv`.\n"
+        "- The visual timeline is `../figures/c8_http_inflight_timeline.png`.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        f"- The observed HTTP/client offered load is modest for much of the measured span (time-weighted "
+        f"mean {http_mean}, P90 {http_p90}, P95 {http_p95}), but it is not synonymous with a scheduler "
+        "running count.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- Profile endpoints do not identify how much of an interval was frontend routing, queueing, "
+        "prefill, KV transfer, decode, or client/network work.\n\n"
+    )
+
+    text += "## Root vs subagent fan-out\n\n"
+    text += "### Evidence\n\n"
+    text += _table(origin) + "\n\n"
+    text += (
+        f"- Maximum simultaneous HTTP/profile intervals were root={root_max} and subagent={subagent_max}. "
+        "A root/subagent label comes from source-workload branch origin, not a backend worker assignment.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- Source subagent fan-out can make the request-plane overlap differ from the configured root-lane "
+        "count even when the benchmark has only eight root trajectories.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- The branch label alone cannot establish whether a branch was queued, batched, or served by a "
+        "specific H200 GPU.\n\n"
+    )
+
+    text += "## ID03 load context\n\n"
+    text += "### Evidence\n\n"
+    text += _table(relationship) + "\n\n"
+    text += _table(buckets) + "\n\n"
+    text += (
+        "- All 119 public c8 ID03 profile rows are versioned with system/root/subagent request-start "
+        "overlap in `../processed/id03_c8_with_system_load.csv`. The scatter plot is "
+        "`../figures/id03_ttft_vs_system_inflight.png`.\n"
+        "- `../processed/id03_c8_backend_pressure.csv` adds exact Dynamo selected-worker routing and "
+        "any matched router long-wait checkpoint. It does not add request-level SGLang running/waiting "
+        "or GPU-affinity evidence.\n"
+        "- The displayed Spearman associations use HTTP interval overlap at request start—not a scheduler "
+        "running counter—and do not adjust for request shape, source branch, cache state, route, or MTP state.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        f"- For ID03 c8, TTFT has no material monotonic association with this offered-load proxy in the "
+        f"observed sample (Spearman ρ={rho_ttft}, p={p_ttft}, n={n_ttft}). This is descriptive, not a "
+        "causal queueing test.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- A weak TTFT association at this profile-interval granularity cannot rule out queueing or "
+        "admission effects inside an individual request.\n\n"
+    )
+
+    text += "## Prefill scheduler evidence\n\n"
+    text += "### Evidence\n\n"
+    text += _table(_c8_scheduler_key_rows(prefill)) + "\n\n"
+    text += (
+        f"- Explicit rank-export series show a maximum observed prefill `num_running_reqs` of "
+        f"{prefill_running} and `num_queue_reqs` of {prefill_waiting}; these are not summed across ranks.\n"
+        "- `../processed/c8_prefill_scheduler_timeline.csv` is event/scrape sampled. Its values are not "
+        "treated as a time-weighted worker total.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- Nonzero prefill queue samples demonstrate some observed waiting at this rank-series scope, but "
+        "do not prove saturation of a prefill worker or the two-worker system.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- A precise per-worker prefill batch size, token load, and active-request total cannot be recovered "
+        "by summing the available rank series.\n\n"
+    )
+
+    text += "## Decode scheduler evidence\n\n"
+    text += "### Evidence\n\n"
+    text += _table(_c8_scheduler_key_rows(decode)) + "\n\n"
+    text += (
+        f"- Explicit rank-export series show a maximum observed decode `num_running_reqs` of "
+        f"{decode_running} and `num_queue_reqs` of {decode_waiting}; these are not summed across ranks.\n"
+        "- `../processed/c8_decode_scheduler_timeline.csv` is event/scrape sampled rather than a "
+        "request-correlated execution timeline.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- The available decode rank-series samples do not show a global running-request total or establish "
+        "the batch pressure experienced by any one request.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- Actual decode-worker-total running/waiting counts and per-request decode admission time remain "
+        "unknown from the public exports.\n\n"
+    )
+
+    text += "## Routing and queue checkpoints\n\n"
+    text += "### Evidence\n\n"
+    text += _table(routing) + "\n\n"
+    text += _table(checkpoints) + "\n\n"
+    text += _table(
+        _select(
+            _c8_scheduler_key_rows(inventory),
+            [
+                "component",
+                "worker",
+                "candidate_metric_name",
+                "value",
+                "metric_scope_interpretation",
+                "classification",
+            ],
+        )
+    )
+    text += (
+        "\n\n- Dynamo routing was exactly joined from public profile `x_request_id` to frontend completion "
+        "events for the profile rows. It identifies selected logical workers only.\n"
+        "- The queue checkpoint table contains a limited set of long-wait refresh events and is not a final "
+        "per-request scheduler queue-time decomposition.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- Routing balance can be reviewed at a Dynamo logical-worker level, while the corresponding "
+        "backend GPU affinity and per-worker scheduler pressure remain separate questions.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- A request-correlated `accepted → queued → running → first token` chain is unavailable, so queue "
+        "components cannot be subtracted from TTFT.\n\n"
+    )
+
+    text += "## What c8 actually means\n\n"
+    text += "### Evidence\n\n"
+    text += _table(
+        _select(
+            summary,
+            ["metric", "value", "status", "evidence_scope", "notes"],
+        ).loc[
+            lambda frame: frame.get("metric", pd.Series(dtype="string")).astype("string").isin(
+                [
+                    "agentx_root_concurrency_configured",
+                    "prefill_configured_max_running",
+                    "decode_configured_max_running",
+                    "prefill_observed_max_running",
+                    "prefill_observed_max_waiting",
+                    "decode_observed_max_running",
+                    "decode_observed_max_waiting",
+                    "routing_exact_profile_join_count",
+                ]
+            )
+        ]
+        if not summary.empty
+        else summary
+    )
+    text += "\n\n"
+    text += "### Inference\n\n"
+    text += (
+        "- `c8` should be read first as configured AgentX root-trajectory lane concurrency. The other "
+        "observed counters provide complementary scopes rather than a conversion from lanes to backend "
+        "running requests.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- No evidence establishes that c8 equals eight simultaneous HTTP requests, eight SGLang running "
+        "requests, eight requests per worker, or eight GPU sequences.\n\n"
+    )
+
+    text += "## Direct answers to the reconstruction questions\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        f"- **Question A — Does AgentX c8 imply only 8 simultaneous HTTP requests? No.** The configured "
+        f"root-lane count is eight, while the observed profile-interval maximum is {http_max}.\n"
+        f"- **Question B — Maximum observed HTTP in-flight during profiling:** {http_max}. The time-weighted "
+        f"mean/P90/P95 are {http_mean}/{http_p90}/{http_p95}.\n"
+        "- **Question C — Was scheduler saturation observed? Unknown at the global scheduler scope.** Explicit "
+        "rank-export counters exist, but their values cannot be summed into worker/cluster totals or compared "
+        "as a global saturation fraction.\n"
+        f"- **Question D — Can H200 queue time be separated from TTFT? No complete request-level decomposition.** "
+        f"The public evidence has `{queue_scope}` plus limited router checkpoints, not a full lifecycle join.\n"
+        f"- **Question E — Is ID03 TTFT associated with offered load?** The unadjusted c8 interval-overlap "
+        f"Spearman result is ρ={rho_ttft}, p={p_ttft}, n={n_ttft}; its bucket values are in "
+        "`../processed/id03_c8_load_buckets.csv`.\n"
+        "- **Question F — Can a future external comparison distinguish queueing from execution-side pre-first-token "
+        "latency? Partly.** This public reference supplies HTTP overlap, rank-series scheduler summaries, routing, "
+        "and limited checkpoints; an external system must additionally expose a request-correlated lifecycle to "
+        "make the separation.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- The rank-series maxima below are useful pressure evidence, but neither nonzero waiting nor a low "
+        "HTTP interval count alone explains the public c8 TTFT distribution or proves high backend admission "
+        "capacity. Both offered load and execution-side mechanisms may contribute.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- The evidence cannot apportion low TTFT between low offered load and backend admission capacity, "
+        "or quantify a per-request H200 scheduler queue time.\n\n"
+    )
+
+    text += "## Files for a subsequent public/external comparison\n\n"
+    text += (
+        "1. `../processed/c8_concurrency_reconstruction_summary.csv`\n"
+        "2. `../processed/c8_http_concurrency_summary.csv`\n"
+        "3. `../processed/c8_requests_with_inflight_context.csv`\n"
+        "4. `../processed/id03_c8_with_system_load.csv`\n"
+        "5. `../processed/id03_c8_backend_pressure.csv`\n"
+        "6. `../processed/id03_c8_load_latency_relationship.csv`\n"
+        "7. `../processed/id03_c8_load_buckets.csv`\n"
+        "8. `../processed/c8_scheduler_metric_inventory.csv`\n"
+        "9. `../processed/c8_prefill_scheduler_summary.csv`\n"
+        "10. `../processed/c8_decode_scheduler_summary.csv`\n"
+        "11. `../processed/c8_backend_worker_routing_summary.csv`\n"
+        "12. `../processed/c8_router_queue_wait_checkpoint_summary.csv`\n"
+        "13. `../figures/c8_http_inflight_timeline.png`\n"
+        "14. `../figures/id03_ttft_vs_system_inflight.png`\n"
+    )
+    _write(path, text)
+
+
+def _relationship_value(
+    frame: pd.DataFrame, predictor: str, outcome: str, field: str
+) -> str:
+    """Safely render one relationship result when a recomputation omits it."""
+
+    required = {"predictor", "outcome", field}
+    if frame.empty or not required.issubset(frame.columns):
+        return "Unknown"
+    match = frame.loc[
+        (frame["predictor"].astype("string") == predictor)
+        & (frame["outcome"].astype("string") == outcome),
+        field,
+    ]
+    if match.empty or pd.isna(match.iloc[0]):
+        return "Unknown"
+    return _cell(match.iloc[0])
+
+
 def _id03_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
     """Keep the primary local-comparison evidence near the top-level handoff."""
 
@@ -656,6 +1048,109 @@ def _id03_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
         "7. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c8_c16.csv\n"
         "8. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c12_c16.csv\n"
         "9. studies/h200_gpu_resident_mtp/handoff/id03_local_join_contract.md\n"
+    )
+
+
+def _c8_concurrency_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
+    """Append scope-safe c8 load evidence to the GitHub-first handoff."""
+
+    summary = tables.get("c8_concurrency_reconstruction_summary", pd.DataFrame())
+    http = tables.get("c8_http_concurrency_summary", pd.DataFrame())
+    origin = tables.get("c8_root_subagent_offered_load_summary", pd.DataFrame())
+    relationship = tables.get("id03_c8_load_latency_relationship", pd.DataFrame())
+    prefill = tables.get("c8_prefill_scheduler_summary", pd.DataFrame())
+    decode = tables.get("c8_decode_scheduler_summary", pd.DataFrame())
+    http_max = _c8_summary_metric(tables, "http_max_inflight")
+    http_mean = _c8_summary_metric(tables, "http_time_weighted_mean_inflight")
+    http_p90 = _c8_summary_metric(tables, "http_time_weighted_p90_inflight")
+    http_p95 = _c8_summary_metric(tables, "http_time_weighted_p95_inflight")
+    root_max = _c8_summary_metric(tables, "http_max_root_inflight")
+    subagent_max = _c8_summary_metric(tables, "http_max_subagent_inflight")
+    prefill_running = _c8_summary_metric(tables, "prefill_observed_max_running")
+    prefill_waiting = _c8_summary_metric(tables, "prefill_observed_max_waiting")
+    decode_running = _c8_summary_metric(tables, "decode_observed_max_running")
+    decode_waiting = _c8_summary_metric(tables, "decode_observed_max_waiting")
+    rho_ttft = _relationship_value(relationship, "system_inflight_at_start", "ttft_ms", "spearman_rho")
+    p_ttft = _relationship_value(relationship, "system_inflight_at_start", "ttft_ms", "p_value")
+    n_ttft = _relationship_value(relationship, "system_inflight_at_start", "ttft_ms", "sample_count")
+
+    return (
+        "\n\n## c8 Concurrency / Scheduler Reconstruction\n\n"
+        "### Evidence\n\n"
+        "- **AgentX root lanes:** c8 configures eight root-trajectory lanes. It is not a declaration "
+        "of eight HTTP or SGLang-running requests.\n"
+        f"- **HTTP/client interval overlap:** max={http_max}; time-weighted mean={http_mean}; "
+        f"P90={http_p90}; P95={http_p95}. These are `[request_start_ns, request_end_ns)` "
+        "profile intervals with end-before-start tie handling, never relabelled as GPU or scheduler "
+        "running concurrency.\n"
+        f"- **Root/subagent overlap:** maximum root={root_max}; maximum subagent={subagent_max}. "
+        "Branch origin is not backend worker or GPU affinity.\n"
+        f"- **ID03 c8 load relation:** unadjusted Spearman HTTP-overlap-at-start vs TTFT: "
+        f"ρ={rho_ttft}, p={p_ttft}, n={n_ttft}.\n"
+        f"- **Observed scheduler counters:** prefill rank-series maximum running/waiting="
+        f"{prefill_running}/{prefill_waiting}; decode rank-series maximum running/waiting="
+        f"{decode_running}/{decode_waiting}. These are explicit AIPerf public server-metrics "
+        "export series, not summed worker or cluster totals.\n\n"
+        + _table(
+            _select(
+                summary,
+                ["metric", "value", "status", "evidence_scope", "notes"],
+            )
+        )
+        + "\n\n"
+        + _table(
+            _select(
+                http,
+                [
+                    "valid_interval_request_count",
+                    "max_inflight",
+                    "time_weighted_mean_inflight",
+                    "time_weighted_p90_inflight",
+                    "time_weighted_p95_inflight",
+                    "same_timestamp_policy",
+                ],
+            )
+        )
+        + "\n\n"
+        + _table(origin)
+        + "\n\n"
+        + _table(relationship)
+        + "\n\n"
+        + _table(_c8_scheduler_key_rows(prefill))
+        + "\n\n"
+        + _table(_c8_scheduler_key_rows(decode))
+        + "\n\n### Inference\n\n"
+        "- c8 does **not** imply only eight simultaneous HTTP requests: the observed interval maximum "
+        "exceeds eight. It also cannot be converted into actual SGLang batch size, per-worker active "
+        "request total, or GPU sequence count.\n"
+        "- The public counters provide evidence of rank-series pressure and occasional prefill waiting, "
+        "but not a cluster-global scheduler-saturation conclusion. Configured prefill/decode limits "
+        "(32/200) remain capacity settings, not observed runtime totals.\n"
+        "- The public ID03 relation is descriptive only: it neither proves a queueing cause nor controls "
+        "for workload shape, route, cache state, or MTP behavior.\n\n"
+        "### Unknown\n\n"
+        "- Global scheduler saturation is unknown: rank-series counters cannot be summed into a worker/cluster "
+        "total, and no saturation fraction is exported.\n"
+        "- A complete per-request H200 queue time is unavailable. The package has aggregate SGLang "
+        "queue-time evidence and a limited set of exact Dynamo router long-wait checkpoints, but no "
+        "request-correlated accepted→queued→running→first-token lifecycle. TTFT cannot be decomposed "
+        "into queueing versus execution from these data alone.\n"
+        "- Selected Dynamo worker routing is not backend GPU affinity; no per-request prefill/decode "
+        "scheduler-pressure join is established.\n\n"
+        "### Files ChatGPT should read for c8 concurrency\n\n"
+        "1. `studies/h200_gpu_resident_mtp/reports/13_c8_concurrency_scheduler_reconstruction.md`\n"
+        "2. `studies/h200_gpu_resident_mtp/processed/c8_concurrency_reconstruction_summary.csv`\n"
+        "3. `studies/h200_gpu_resident_mtp/processed/c8_http_concurrency_summary.csv`\n"
+        "4. `studies/h200_gpu_resident_mtp/processed/c8_requests_with_inflight_context.csv`\n"
+        "5. `studies/h200_gpu_resident_mtp/processed/id03_c8_with_system_load.csv`\n"
+        "6. `studies/h200_gpu_resident_mtp/processed/id03_c8_backend_pressure.csv`\n"
+        "7. `studies/h200_gpu_resident_mtp/processed/id03_c8_load_latency_relationship.csv`\n"
+        "8. `studies/h200_gpu_resident_mtp/processed/id03_c8_load_buckets.csv`\n"
+        "9. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_metric_inventory.csv`\n"
+        "10. `studies/h200_gpu_resident_mtp/processed/c8_prefill_scheduler_summary.csv`\n"
+        "11. `studies/h200_gpu_resident_mtp/processed/c8_decode_scheduler_summary.csv`\n"
+        "12. `studies/h200_gpu_resident_mtp/processed/c8_backend_worker_routing_summary.csv`\n"
+        "13. `studies/h200_gpu_resident_mtp/processed/c8_router_queue_wait_checkpoint_summary.csv`\n"
     )
 
 
@@ -780,6 +1275,7 @@ def _build_handoff(
         + "\n\n## ID02 Key Metrics\n\n"
         + _requested_metrics_table(tables.get("id02_by_concurrency", pd.DataFrame()))
         + _id03_handoff_text(tables)
+        + _c8_concurrency_handoff_text(tables)
         + "\n\n- **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` only as a raw profile counter; `raw_profile_cache_counter_tps` is not a validated logical-prompt or physical-KV metric.\n"
         + "\n\n## HiSparse c8 vs GPU-resident c8\n\n"
         + _table(comparison)
@@ -920,6 +1416,35 @@ def _write_korean_summary(
         "input_sequence_length 또는 source_input_tokens로 대체하지 않는다.\n"
         "- **Unknown:** 사내 cpy1~cpy8 수치는 이 repository에 없으며 생성하지 않았다. 이후 계약은 "
         "handoff/id03_local_join_contract.md와 reports/12_id03_local_cpy_comparison_plan.md를 따른다.\n\n"
+    )
+    text += "# c8 offered load 및 scheduler 재구성\n\n"
+    text += "## Evidence\n\n"
+    text += _table(
+        _select(
+            tables.get("c8_concurrency_reconstruction_summary", pd.DataFrame()),
+            ["metric", "value", "status", "evidence_scope", "notes"],
+        )
+    ) + "\n\n"
+    text += (
+        "- HTTP in-flight는 957개 successful profiling request의 `[start, end)` interval overlap이며, "
+        "SGLang running 수나 GPU sequence 수가 아니다. 동일 timestamp에서는 end를 start보다 먼저 "
+        "처리했다.\n"
+        "- server-metrics export에는 prefill/decode의 explicit rank-series `num_running_reqs` 및 "
+        "`num_queue_reqs`가 있으나, rank 값을 worker/cluster 합계로 더하지 않았다.\n\n"
+    )
+    text += "## Inference\n\n"
+    text += (
+        "- AgentX c8은 root trajectory lane=8 설정이다. 관측 HTTP interval maximum이 8을 넘으므로 "
+        "c8을 ‘동시 HTTP request 8개’라고 읽을 수 없다.\n"
+        "- ID03의 TTFT와 request-start HTTP overlap의 Spearman 결과는 descriptive이며 queueing의 "
+        "causal proof가 아니다.\n\n"
+    )
+    text += "## Unknown\n\n"
+    text += (
+        "- global scheduler saturation, worker/cluster total running request, request-level queue time, "
+        "그리고 GPU affinity는 공개 자료만으로 확정할 수 없다. Aggregate queue counter와 일부 Dynamo "
+        "long-wait checkpoint는 존재하지만 TTFT를 queue/execution으로 분해하지 않는다. 상세은 "
+        "reports/13_c8_concurrency_scheduler_reconstruction.md를 따른다.\n\n"
     )
     text += "# Concurrency c8 / c12 / c16 비교\n\n"
     text += "- 이 study의 public run은 c8/c12/c16이며, 고정 시간 replay이므로 coverage를 동반해 비교한다.\n"

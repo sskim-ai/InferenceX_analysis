@@ -1,0 +1,28 @@
+metric,value,status,evidence_scope,notes
+agentx_root_concurrency_configured,8,Evidence,AIPerf c8 command / trajectory lanes,Configured root-trajectory lane count; not HTTP or scheduler running count.
+http_max_inflight,11,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_time_weighted_mean_inflight,3.968259088179123,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_time_weighted_p50_inflight,4.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_time_weighted_p75_inflight,5.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_time_weighted_p90_inflight,7.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_time_weighted_p95_inflight,8.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_time_weighted_p99_inflight,9.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_max_root_inflight,7,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_max_subagent_inflight,7,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_time_weighted_mean_root_inflight,2.587678942023965,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_time_weighted_mean_subagent_inflight,1.3805801461551577,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_fraction_time_inflight_ge_8,0.05264858957537656,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_fraction_time_inflight_ge_12,0.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_fraction_time_inflight_ge_16,0.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_fraction_time_inflight_ge_24,0.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+http_fraction_time_inflight_ge_32,0.0,Evidence,"957 successful profiling request [start,end) intervals",HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency.
+prefill_configured_max_running,32,Evidence,public startup ServerArgs / runtime evidence,"Configured capacity, not observed runtime running-request count."
+decode_configured_max_running,200,Evidence,public startup ServerArgs / runtime evidence,"Configured capacity, not observed runtime running-request count."
+prefill_observed_max_running,5.0,Evidence,AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series,Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total.
+prefill_observed_max_waiting,5.0,Evidence,AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series,Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total.
+decode_observed_max_running,2.0,Evidence,AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series,Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total.
+decode_observed_max_waiting,0.0,Evidence,AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series,Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total.
+router_queue_wait_checkpoint_profile_request_count,18,Evidence,exact frontend router request ID -> x_request_id -> profiling row join,Long-wait refresh checkpoints are not final scheduler queue time.
+router_queue_wait_checkpoint_max_ms,27520.0,Evidence,exact frontend router request ID -> x_request_id -> profiling row join,"Long-wait refresh checkpoint, not full per-request queue decomposition."
+h200_explicit_queue_time,aggregate_scheduler_histogram_and_router_checkpoints_available,Evidence,SGLang queue_time_seconds rank-series histogram plus exact long-wait router checkpoint events,No complete request-level scheduler lifecycle join exists; TTFT cannot be decomposed into queue versus execution.
+routing_exact_profile_join_count,957,Evidence,raw profile x_request_id -> frontend request-completed log,"Dynamo worker routing only, not GPU affinity."
