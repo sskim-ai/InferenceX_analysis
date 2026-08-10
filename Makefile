@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PYTHON ?= .venv/bin/python
 CONFIG := configs/run_29820102138.yaml
 
-.PHONY: bootstrap preflight acquire-run acquire-traces inspect build-source build-h200 join coverage analyze-ids analyze-concurrency validate figures report test lint secret-scan all mtp-acquire mtp-analyze mtp-report mtp-all
+.PHONY: bootstrap preflight acquire-run acquire-traces inspect build-source build-h200 join coverage analyze-ids analyze-concurrency validate figures report test lint secret-scan all mtp-acquire mtp-analyze mtp-id03 mtp-report mtp-all
 
 bootstrap:
 	bash scripts/bootstrap.sh
@@ -65,11 +65,15 @@ mtp-acquire:
 mtp-analyze:
 	$(PYTHON) scripts/h200_gpu_resident_mtp/analyze.py
 
+mtp-id03:
+	mkdir -p .mplconfig
+	MPLCONFIGDIR=$(CURDIR)/.mplconfig $(PYTHON) scripts/h200_gpu_resident_mtp/id03_deep_dive.py
+
 mtp-report:
 	mkdir -p .mplconfig
 	MPLCONFIGDIR=$(CURDIR)/.mplconfig $(PYTHON) scripts/h200_gpu_resident_mtp/build_reports.py
 
-mtp-all: mtp-analyze mtp-report
+mtp-all: mtp-analyze mtp-id03 mtp-report
 
 all: preflight
 	$(MAKE) acquire-run

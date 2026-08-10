@@ -28,6 +28,7 @@ REQUESTED_IDS: tuple[tuple[str, str, str], ...] = (
     ("ID04", "264478", "prefix"),
     ("ID05", "debc7f6", "prefix"),
 )
+MIN_COMPARATIVE_ITL_SAMPLES = 3
 
 # These aliases are intentionally strict.  In particular, input_sequence_length
 # is not an alias for logical_prompt_tokens because their equivalence has to be
@@ -332,7 +333,8 @@ def summarize_requests(frame: Any, *, concurrency: int | None = None) -> dict[st
         "wall_span_s": span,
         "cumulative_request_latency_s": _sum(e2e) / 1000.0 if _sum(e2e) is not None else None,
         "logical_input_tps": _ratio(_sum(logical), span),
-        "cache_load_tps": _ratio(_sum(cache_read), span),
+        "raw_profile_cache_counter_tps": _ratio(_sum(cache_read), span),
+        "raw_profile_cache_counter_status": "profile_counter_scope_unvalidated",
         "new_prompt_tps": _ratio(_sum(new_prompt), span),
         "kv_write_eligible_tps": _ratio(_sum(kv_write), span),
         "wall_output_tps": wall_output_rate,
@@ -357,6 +359,19 @@ def summarize_requests(frame: Any, *, concurrency: int | None = None) -> dict[st
         "mtp_acceptance_rate_mean": _mean(numeric("mtp_observed_acceptance_rate")),
         "mtp_acceptance_length_mean": _mean(numeric("mtp_acceptance_length")),
     }
+
+
+def decode_tps_comparison_status(
+    itl_sample_count: int | float | None,
+    *,
+    minimum_samples: int = MIN_COMPARATIVE_ITL_SAMPLES,
+) -> str:
+    """Label sparse ITL-derived TPS as descriptive rather than comparative."""
+
+    count = _number(itl_sample_count)
+    if count is None or count < minimum_samples:
+        return f"suppressed_n_lt_{minimum_samples}_descriptive_only"
+    return "comparative_sample_size_available"
 
 
 def requested_id_resolution(
