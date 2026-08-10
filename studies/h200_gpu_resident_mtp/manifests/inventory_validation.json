@@ -1,0 +1,142 @@
+{
+  "expected_artifact_ids": [
+    9017979109,
+    9017975161,
+    9017974866,
+    9019209525,
+    9019205268,
+    9019204997,
+    9020484364,
+    9020480067,
+    9020479786
+  ],
+  "found_artifact_ids": [
+    9020485808,
+    9020484364,
+    9020480067,
+    9020479786,
+    9019209525,
+    9019205268,
+    9019204997,
+    9017979109,
+    9017975161,
+    9017974866
+  ],
+  "selected_artifact_count": 9,
+  "all_expected_ids_present": true,
+  "all_selected_expired_false": true,
+  "all_selected_workflow_run_ids_match": true,
+  "all_selected_workflow_head_shas_match": true,
+  "all_selected_digests_present": true,
+  "artifact_name_category_concurrency_matches": true,
+  "per_artifact": [
+    {
+      "artifact_id": 9020484364,
+      "name": "agentic_glm5.2_p2x1_d2x8_conc16_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc16_h200-dgxc-slurm_11",
+      "expected_category": "raw_result",
+      "parsed_category": "raw_result",
+      "expected_concurrency": 16,
+      "parsed_concurrency": 16,
+      "github_digest": "sha256:6068553b427c0f196aeae5401e685779286aad692854549d383f1fd794ccc23f",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    },
+    {
+      "artifact_id": 9020480067,
+      "name": "bmk_agentic_glm5.2_p2x1_d2x8_conc16_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc16_h200-dgxc-slurm_11",
+      "expected_category": "aggregate",
+      "parsed_category": "aggregate",
+      "expected_concurrency": 16,
+      "parsed_concurrency": 16,
+      "github_digest": "sha256:09d6fa6d20d50efcb7fe3ad3663d1b1cafe57e028562a3809f019e6c47878f30",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    },
+    {
+      "artifact_id": 9020479786,
+      "name": "multinode_server_logs_glm5.2_p2x1_d2x8_conc16_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc16_h200-dgxc-slurm_11",
+      "expected_category": "server_logs",
+      "parsed_category": "server_logs",
+      "expected_concurrency": 16,
+      "parsed_concurrency": 16,
+      "github_digest": "sha256:363cecd0eef29d48152e6df275fc9379ab1d8124d6f205347a50ba88cc3f9cef",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    },
+    {
+      "artifact_id": 9019209525,
+      "name": "agentic_glm5.2_p2x1_d2x8_conc12_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc12_h200-dgxc-slurm_6",
+      "expected_category": "raw_result",
+      "parsed_category": "raw_result",
+      "expected_concurrency": 12,
+      "parsed_concurrency": 12,
+      "github_digest": "sha256:30c60b1d0abb044aa1707f2b12e15a4b17d3e743007f7a7296798e606cfd59cf",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    },
+    {
+      "artifact_id": 9019205268,
+      "name": "bmk_agentic_glm5.2_p2x1_d2x8_conc12_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc12_h200-dgxc-slurm_6",
+      "expected_category": "aggregate",
+      "parsed_category": "aggregate",
+      "expected_concurrency": 12,
+      "parsed_concurrency": 12,
+      "github_digest": "sha256:063689cc6bd0297cad573046f1427fbc4ffcb08179e013abef2c5cd083b39269",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    },
+    {
+      "artifact_id": 9019204997,
+      "name": "multinode_server_logs_glm5.2_p2x1_d2x8_conc12_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc12_h200-dgxc-slurm_6",
+      "expected_category": "server_logs",
+      "parsed_category": "server_logs",
+      "expected_concurrency": 12,
+      "parsed_concurrency": 12,
+      "github_digest": "sha256:2b42bf400bc980613de2276258b82ab8c412deb0e31a4267b176c7d1397ff78d",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    },
+    {
+      "artifact_id": 9017979109,
+      "name": "agentic_glm5.2_p2x1_d2x8_conc8_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc8_h200-dgxc-slurm_7",
+      "expected_category": "raw_result",
+      "parsed_category": "raw_result",
+      "expected_concurrency": 8,
+      "parsed_concurrency": 8,
+      "github_digest": "sha256:fbcb6b7763a8cec8be37bc13e3e305c8f667286ac7229fad41f4b6802ed44f8b",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    },
+    {
+      "artifact_id": 9017975161,
+      "name": "bmk_agentic_glm5.2_p2x1_d2x8_conc8_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc8_h200-dgxc-slurm_7",
+      "expected_category": "aggregate",
+      "parsed_category": "aggregate",
+      "expected_concurrency": 8,
+      "parsed_concurrency": 8,
+      "github_digest": "sha256:081ea77a9ed524f9acb794b5d4f4d92bf2ef7e2cf17d93ccdf2980a503655cf8",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    },
+    {
+      "artifact_id": 9017974866,
+      "name": "multinode_server_logs_glm5.2_p2x1_d2x8_conc8_fp8_dynamo-sglang_prefill-tp1-pp1-dcp1-pcp8-ep1-dpfalse-nw2_decode-tp8-pp1-dcp1-pcp1-ep1-dptrue-nw2_disagg-true_spec-mtp_conc8_h200-dgxc-slurm_7",
+      "expected_category": "server_logs",
+      "parsed_category": "server_logs",
+      "expected_concurrency": 8,
+      "parsed_concurrency": 8,
+      "github_digest": "sha256:a0f8ce452f6f082b5a15604a034b50cfdeaf60132c4d36d6e0ff15c0570147da",
+      "expired": false,
+      "workflow_run_id": 31235207041,
+      "workflow_run_head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802"
+    }
+  ]
+}

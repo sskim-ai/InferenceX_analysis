@@ -1,0 +1,86 @@
+{
+  "study": "H200 GPU-resident KV + MTP AgentX",
+  "analysis_git": {
+    "repository": "https://github.com/sskim-ai/InferenceX_analysis",
+    "branch": "analysis/h200-gpu-resident-mtp",
+    "starting_commit": "5411307f0be9e481a37a80d5ee477faf81c16c8c",
+    "base_ref": "origin/main"
+  },
+  "acquisition": {
+    "evidence_classification": "Evidence",
+    "generated_at_utc": "2026-08-10T06:16:56Z",
+    "github_repository": "SemiAnalysisAI/InferenceX",
+    "run": {
+      "id": 31235207041,
+      "display_title": "Run Sweep - Refresh GLM-5.2 FP8 H200 AgentX 2P2D with MTP",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "48ec5aa103dbf8e671580cd191eeef7e7186c802",
+      "head_branch": "agent/refresh-glm52-h200-sglang-agentic-mtp-2p2d",
+      "workflow_id": 214438218,
+      "run_attempt": 1,
+      "created_at": "2026-08-08T02:32:54Z",
+      "updated_at": "2026-08-08T10:24:38Z"
+    },
+    "pull_request": {
+      "number": 2529,
+      "state": "closed",
+      "merged": true,
+      "head_sha": "bc83b176b094fed2d17452018f5cafafe9cdbccd",
+      "merge_commit_sha": "6891093d9c3cf5f83fcb8d81d75415991b2bf3ef",
+      "base_sha": "c34114228206d944cc37dd45eabf953e2d59c8fd",
+      "url": "https://github.com/SemiAnalysisAI/InferenceX/pull/2529"
+    },
+    "artifact_inventory": {
+      "total_run_artifacts": 10,
+      "selected_artifacts": 9,
+      "selected_concurrencies": [
+        8,
+        12,
+        16
+      ],
+      "per_concurrency": {
+        "8": {
+          "raw_result": 9017979109,
+          "aggregate": 9017975161,
+          "server_logs": 9017974866
+        },
+        "12": {
+          "raw_result": 9019209525,
+          "aggregate": 9019205268,
+          "server_logs": 9019204997
+        },
+        "16": {
+          "raw_result": 9020484364,
+          "aggregate": 9020480067,
+          "server_logs": 9020479786
+        }
+      },
+      "all_selected_artifacts_expired": false,
+      "all_selected_archives_sha256_match_github_digest": true,
+      "all_selected_archives_zip_crc_valid": true,
+      "raw_inventory_path": "data/raw/h200_gpu_resident_mtp/run_artifacts.json",
+      "versioned_inventory_path": "studies/h200_gpu_resident_mtp/manifests/artifact_inventory.csv",
+      "unpacked_file_inventory_path": "studies/h200_gpu_resident_mtp/manifests/artifact_file_inventory.csv",
+      "raw_data_commit_policy": "Git-ignored; archive ZIPs, extracted artifacts, logs, and JSONL remain local only",
+      "inventory_validation_path": "studies/h200_gpu_resident_mtp/manifests/inventory_validation.json"
+    },
+    "download_method": "authenticated GitHub CLI range requests; ranges were size-checked before reassembly; no credential was stored or emitted",
+    "commit_relationship": {
+      "canonical_runtime_commit": "48ec5aa103dbf8e671580cd191eeef7e7186c802",
+      "pr_head_commit": "bc83b176b094fed2d17452018f5cafafe9cdbccd",
+      "pr_merge_commit": "6891093d9c3cf5f83fcb8d81d75415991b2bf3ef",
+      "current_main_commit_at_acquisition": "09e6cd0d7be787fa1b015187fd08823c352a9e03",
+      "interpretation": "The workflow run head SHA is canonical for runtime recipe/configuration evidence; PR head, merge SHA, and current main are recorded separately."
+    },
+    "authentication": {
+      "authenticated_live_api_identity": "sskim-ai",
+      "authentication_evidence": "authenticated gh api /user succeeded before artifact acquisition",
+      "credential_handling": "No token, credential, cookie, or signed URL was written to this repository."
+    }
+  },
+  "unknown": [
+    "The GitHub artifact digest verifies the downloaded archive, not each logical metric interpretation."
+  ]
+}

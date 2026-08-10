@@ -41,6 +41,8 @@ data/interim/**
 # Per-request exclusion ledger is useful locally but too large/noisy for the
 # versioned reproducibility summary.  Aggregate CSVs remain reviewable.
 data/processed/h200_request_exclusions.csv
+studies/h200_gpu_resident_mtp/processed/h200_request_exclusions.csv
+.mplconfig/
 
 # Vendor checkout metadata and temporary files. Provenance lives in
 # manifests/provenance.json and vendor/README.md; do not accidentally vendor
