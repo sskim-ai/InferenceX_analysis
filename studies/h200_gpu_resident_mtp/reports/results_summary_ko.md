@@ -47,27 +47,27 @@
 
 ### ID01
 
-| root_trace_id | concurrency | profiled_request_count | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | wall_output_tps | output_tokens_total | error_count | cancellation_count |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 8 | 58 | 9300.9 | 31640.6 | 93.4123 | 0.287196 | 941 | 0 | 0 |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 12 | 45 | 29178.2 | 41582.9 |  | 0.0136758 | 45 | 0 | 0 |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 16 | 38 | 32193.5 | 86996.6 |  | 0.0115979 | 38 | 0 | 0 |
+| root_trace_id | concurrency | profiled_request_count | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | wall_output_tps | output_tokens_total | error_count | cancellation_count | decode_tps_comparison_status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 8 | 58 | 9300.9 | 31640.6 | 93.4123 | 0.287196 | 941 | 0 | 0 | suppressed_n_lt_3_descriptive_only |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 12 | 45 | 29178.2 | 41582.9 |  | 0.0136758 | 45 | 0 | 0 | suppressed_n_lt_3_descriptive_only |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 16 | 38 | 32193.5 | 86996.6 |  | 0.0115979 | 38 | 0 | 0 | suppressed_n_lt_3_descriptive_only |
 
 ### ID02
 
-| root_trace_id | concurrency | profiled_request_count | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | wall_output_tps | output_tokens_total | error_count | cancellation_count |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 8 | 0 |  |  |  |  |  | 0 | 0 |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 12 | 0 |  |  |  |  |  | 0 | 0 |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 16 | 0 |  |  |  |  |  | 0 | 0 |
+| root_trace_id | concurrency | profiled_request_count | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | wall_output_tps | output_tokens_total | error_count | cancellation_count | decode_tps_comparison_status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 8 | 0 |  |  |  |  |  | 0 | 0 | suppressed_n_lt_3_descriptive_only |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 12 | 0 |  |  |  |  |  | 0 | 0 | suppressed_n_lt_3_descriptive_only |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 16 | 0 |  |  |  |  |  | 0 | 0 | suppressed_n_lt_3_descriptive_only |
 
 ### ID03
 
-| root_trace_id | concurrency | profiled_request_count | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | wall_output_tps | output_tokens_total | error_count | cancellation_count |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 07dd40536557a1d6440a923557c3129dc929 | 8 | 119 | 1080.57 | 3326.14 | 90.4544 | 77.9692 | 37635 | 0 | 0 |
-| 07dd40536557a1d6440a923557c3129dc929 | 12 | 112 | 1729.72 | 17659.2 | 88.3243 | 38.0921 | 31875 | 0 | 0 |
-| 07dd40536557a1d6440a923557c3129dc929 | 16 | 13 | 1647.92 | 41057.6 | 87.6317 | 13.003 | 3925 | 0 | 0 |
+| root_trace_id | concurrency | profiled_request_count | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | wall_output_tps | output_tokens_total | error_count | cancellation_count | decode_tps_comparison_status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 07dd40536557a1d6440a923557c3129dc929 | 8 | 119 | 1080.57 | 3326.14 | 90.4544 | 77.9692 | 37635 | 0 | 0 | comparative_sample_size_available |
+| 07dd40536557a1d6440a923557c3129dc929 | 12 | 112 | 1729.72 | 17659.2 | 88.3243 | 38.0921 | 31875 | 0 | 0 | comparative_sample_size_available |
+| 07dd40536557a1d6440a923557c3129dc929 | 16 | 13 | 1647.92 | 41057.6 | 87.6317 | 13.003 | 3925 | 0 | 0 | comparative_sample_size_available |
 
 ### ID04
 
@@ -79,7 +79,27 @@
 - **Unknown:** no public profiling rows or no unique resolution.
 
 
-- **Scope warning:** raw `usage_prompt_cache_read_tokens` is retained in full per-ID CSVs, but it is not a validated logical-cache ratio, physical KV-load metric, or `cache_load_tps` basis.
+- **Scope warning:** raw `usage_prompt_cache_read_tokens` is retained in full per-ID CSVs, and `raw_profile_cache_counter_tps`, where present, is an unvalidated raw-profile-counter rate. Neither is a logical-cache ratio, physical KV-load metric, or cache-load throughput.
+
+# ID03 Deep Dive 및 사내 cpy 비교 준비
+
+- **Evidence:** ID03 prefix 07dd405는 07dd40536557a1d6440a923557c3129dc929로 unique resolution되었다. c8/c12/c16의 source-key coverage, request-level reference, exact-match table, latency distribution을 별도 version했다.
+
+| concurrency | profile_request_count | coverage_ratio | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | itl_sample_count | ttft_inflation_vs_c8 | tps_retention_vs_c8 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 8 | 119 | 1 | 1080.57 | 3326.14 | 90.4544 | 119 | 1 | 1 |
+| 12 | 112 | 0.941176 | 1729.72 | 17659.2 | 88.3243 | 112 | 1.60075 | 0.976452 |
+| 16 | 13 | 0.109244 | 1647.92 | 41057.6 | 87.6317 | 13 | 1.52505 | 0.968795 |
+
+| pair | matched_source_key_count | strict_ttft_count | strict_decode_count | median_ttft_ratio_right_over_left | weighted_itl_ratio_right_over_left | coverage_overlap_ratio_jaccard |
+| --- | --- | --- | --- | --- | --- | --- |
+| c8_c12 | 112 | 112 | 112 | 1.45117 | 1.01475 | 0.941176 |
+| c8_c16 | 13 | 13 | 13 | 1.28084 | 1.041 | 0.109244 |
+| c12_c16 | 13 | 13 | 13 | 0.32583 | 1.0058 | 0.116071 |
+
+- **Inference:** ID03 c8은 119개 profiling/ITL-valid source key를 갖는 primary public reference다. c12는 112개, c16은 13개 profiling key만 cover하므로 c16은 full-trace concurrency curve가 아니라 late-tail subset으로 해석한다.
+- **Unknown:** public profile에는 request-level target logical prompt token 및 requested output limit이 없어 202,752 context-compatible exact subset은 unavailable이다. input_sequence_length 또는 source_input_tokens로 대체하지 않는다.
+- **Unknown:** 사내 cpy1~cpy8 수치는 이 repository에 없으며 생성하지 않았다. 이후 계약은 handoff/id03_local_join_contract.md와 reports/12_id03_local_cpy_comparison_plan.md를 따른다.
 
 # Concurrency c8 / c12 / c16 비교
 
@@ -176,12 +196,12 @@ make mtp-report
 
 # 기존 HiSparse c8와의 observed difference
 
-| comparison_scope | metric | hisparse_c8_value | gpu_resident_mtp_c8_value | gpu_resident_over_hisparse_ratio | sample_count | caveat |
-| --- | --- | --- | --- | --- | --- | --- |
-| run_level_unpaired_observed_system_difference | ttft_median_ms | 228708 | 1471.05 | 0.00643201 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | weighted_decode_tps | 32.5161 | 92.4771 | 2.84404 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | wall_output_tps | 23.5666 | 210.505 | 8.93234 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | output_tokens_total | 84618 | 760694 | 8.98974 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| source_key_matched_median_observed_system_ratio | ttft_ratio_gpu_resident_over_hisparse |  | 0.00880767 | 0.00880767 | 83 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
-| source_key_matched_median_observed_system_ratio | itl_ratio_gpu_resident_over_hisparse |  | 0.353382 | 0.353382 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
-| source_key_matched_median_observed_system_ratio | e2e_ratio_gpu_resident_over_hisparse |  | 0.0482293 | 0.0482293 | 83 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| comparison_scope | metric | hisparse_c8_value | gpu_resident_mtp_c8_value | gpu_resident_over_hisparse_ratio | hisparse_request_count | gpu_resident_request_count | exact_matched_source_key_count | strict_ttft_count | strict_decode_count | caveat |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| run_level_unpaired_observed_system_difference | ttft_median_ms | 228708 | 1471.05 | 0.00643201 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | weighted_decode_tps | 32.5161 | 92.4771 | 2.84404 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | wall_output_tps | 23.5666 | 210.505 | 8.93234 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | output_tokens_total | 84618 | 760694 | 8.98974 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| source_key_matched_median_observed_system_ratio | ttft_ratio_gpu_resident_over_hisparse |  | 0.00880767 | 0.00880767 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| source_key_matched_median_observed_system_ratio | itl_ratio_gpu_resident_over_hisparse |  | 0.353382 | 0.353382 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| source_key_matched_median_observed_system_ratio | e2e_ratio_gpu_resident_over_hisparse |  | 0.0482293 | 0.0482293 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |

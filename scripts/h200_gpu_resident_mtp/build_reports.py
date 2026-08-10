@@ -142,6 +142,12 @@ def _build_reports(
         + _table(resolution)
         + "\n\n"
         + _requested_tables_text(tables)
+        + "\n\n### ID03 follow-up\n\n"
+        "- The resolved 07dd405 ID is analysed at request/source-key level in "
+        "[11_id03_deep_dive.md](11_id03_deep_dive.md). Its c8/c12/c16 coverage and "
+        "strict matching are deliberately kept separate from the all-ID aggregate tables above.\n"
+        "- **Evidence:** ID01 c8 has one ITL-valid request in the current public table; its "
+        "weighted TPS is marked descriptive only and is suppressed from comparative TPS plots.\n"
         + "\n\n## Inference\n\n"
         "- Prefixes are only used as canonical IDs after strict `startswith()` resolution is unique.\n\n"
         "## Unknown\n\n"
@@ -152,6 +158,13 @@ def _build_reports(
         "# 06. Cross-concurrency matching\n\n"
         "## Evidence\n\n"
         + _table(tables.get("cross_concurrency_match_summary", pd.DataFrame()))
+        + "\n\n### ID03 strict source-key subsets\n\n"
+        + _table(tables.get("id03_cross_concurrency_summary", pd.DataFrame()))
+        + "\n\n- Per-pair request rows are versioned in "
+        "../processed/id03_exact_match_c8_c12.csv, "
+        "../processed/id03_exact_match_c8_c16.csv, and "
+        "../processed/id03_exact_match_c12_c16.csv; three-way overlap is in "
+        "../processed/id03_exact_match_all.csv.\n"
         + "\n\n## Inference\n\n"
         "- Pair rows collapse repeated records to a source-key/concurrency median before ratios; raw request rows are not treated as independent replicates.\n\n"
         "## Unknown\n\n"
@@ -164,8 +177,17 @@ def _build_reports(
         + _table(comparison)
         + "\n\n"
         + _table(tables.get("exact_match_c8_summary", pd.DataFrame()))
+        + "\n\n### Approximate decode-worker-normalized context\n\n"
+        + _table(tables.get("h200_worker_normalized_comparisons", pd.DataFrame()))
+        + "\n\n- **Evidence:** the comparison CSV separates hisparse_request_count, "
+        "gpu_resident_request_count, exact_matched_source_key_count, strict_ttft_count, "
+        "and strict_decode_count. A single generic sample count is not used for both unpaired "
+        "and exact-match evidence.\n"
         + "\n\n## Inference\n\n"
         "- Every ratio is an **observed system-level difference**, not a causal HiSparse effect: GPU count, P/D topology, KV dtype/residency, MTP, routing, and software can all differ.\n\n"
+        "- The c4 HiSparse ↔ c8 GPU-resident MTP and c8 HiSparse ↔ c16 GPU-resident MTP rows are "
+        "only approximate decode-worker-normalized contexts (one versus two decode workers). They do "
+        "not establish equal per-worker load or a causal architecture effect.\n\n"
         "## Unknown\n\n"
         "- The available evidence cannot isolate the contribution of any one of those changes.\n",
     )
@@ -174,6 +196,13 @@ def _build_reports(
         "# 08. User-reported 2-GPU contextual reference\n\n"
         "## Evidence\n\n"
         + _table(tables.get("local_2gpu_user_reported_reference", pd.DataFrame()))
+        + "\n\n### ID03 cpy1–cpy8 follow-up\n\n"
+        "- The public reference and local extraction contract are prepared in "
+        "[11_id03_deep_dive.md](11_id03_deep_dive.md), "
+        "[12_id03_local_cpy_comparison_plan.md](12_id03_local_cpy_comparison_plan.md), and "
+        "[../handoff/id03_local_join_contract.md](../handoff/id03_local_join_contract.md).\n"
+        "- **Unknown:** a local label such as 07dd405_cpy8 is not yet evidence that it means "
+        "global concurrency 8, eight independent root sessions, or eight copies of the same trace.\n"
         + "\n\n## Inference\n\n"
         "- These two rows are a provenance-labelled user-reported aggregate reference, useful for later review but not request-level evidence.\n\n"
         "## Unknown\n\n"
@@ -206,7 +235,501 @@ def _build_reports(
         "- Per-ID GPU utilisation, exact GPU allocation, and physical cache residency cannot be inferred from a conversation ID.\n"
         "- MTP acceptance and KV allocation require actual runtime counters/log scope; absent metrics remain Unknown.\n",
     )
+    _write_id03_deep_dive(reports / "11_id03_deep_dive.md", tables)
+    _write_id03_local_cpy_plan(reports / "12_id03_local_cpy_comparison_plan.md", tables)
     _write_korean_summary(reports / "results_summary_ko.md", tables, recipe, runtime)
+
+
+def _id03_resolution_table(tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Return the one requested-ID resolution row without assuming a hard-coded source universe."""
+
+    frame = tables.get("requested_id_resolution", pd.DataFrame())
+    if frame.empty or "id_label" not in frame:
+        return pd.DataFrame()
+    return frame.loc[frame["id_label"].astype("string") == "ID03"].copy()
+
+
+def _id03_canonical_id(tables: dict[str, pd.DataFrame]) -> str:
+    frame = _id03_resolution_table(tables)
+    if frame.empty or "resolved_full_source_trace_id" not in frame:
+        return "Unknown"
+    value = frame.iloc[0]["resolved_full_source_trace_id"]
+    return str(value) if pd.notna(value) else "Unknown"
+
+
+def _id03_scheduling_evidence_text(tables: dict[str, pd.DataFrame]) -> str:
+    """Render raw-log scheduling evidence only when the extractor produced it."""
+
+    evidence = tables.get("id03_replay_scheduling_evidence", pd.DataFrame())
+    if evidence.empty:
+        return (
+            "- **Unknown:** the generated raw-log scheduling evidence table was unavailable when "
+            "this report was rendered. Do not use this report to attribute coverage to a specific "
+            "scheduler decision.\n"
+        )
+    return (
+        _table(evidence)
+        + "\n\n- **Evidence:** these rows preserve the relevant AIPerf log evidence for the "
+        "fixed profiling duration, randomized trajectory starts, warmup handoff, and root recycling. "
+        "They describe the replay process; they do not assign a causal latency effect to one mechanism.\n"
+    )
+
+
+def _id03_source_turn_detail_text(coverage: pd.DataFrame) -> str:
+    """Render exact source-request positions without inventing schedule causality."""
+
+    if coverage.empty or "concurrency" not in coverage:
+        return ""
+    lines = ["### Exact observed source-position coverage\n"]
+    for concurrency in (12, 16):
+        row = coverage.loc[pd.to_numeric(coverage["concurrency"], errors="coerce") == concurrency]
+        if row.empty:
+            continue
+        item = row.iloc[0]
+        warmup = _compact_index_ranges(item.get("warmup_source_request_indices"))
+        profile = _compact_index_ranges(item.get("profiling_source_request_indices"))
+        lines.append(
+            f"- **Evidence (c{concurrency}):** warmup source-request indices: "
+            f"`{warmup}`; successful profiling source-request indices: "
+            f"`{profile}`. The full exact index list is retained in "
+            "`../processed/id03_source_coverage_by_concurrency.csv`.\n"
+        )
+    return "\n".join(lines) + "\n" if len(lines) > 1 else ""
+
+
+def _compact_index_ranges(value: Any) -> str:
+    """Render semicolon-delimited source indices as compact inclusive ranges."""
+
+    if value is None or pd.isna(value):
+        return "none"
+    try:
+        numbers = sorted({int(item) for item in str(value).split(";") if item})
+    except ValueError:
+        return str(value)
+    if not numbers:
+        return "none"
+    ranges: list[str] = []
+    start = previous = numbers[0]
+    for number in numbers[1:]:
+        if number == previous + 1:
+            previous = number
+            continue
+        ranges.append(str(start) if start == previous else f"{start}–{previous}")
+        start = previous = number
+    ranges.append(str(start) if start == previous else f"{start}–{previous}")
+    return "; ".join(ranges)
+
+
+def _write_id03_deep_dive(path: Path, tables: dict[str, pd.DataFrame]) -> None:
+    """Write the reviewable public-reference report for the resolved ID03 trace."""
+
+    canonical_id = _id03_canonical_id(tables)
+    resolution = _id03_resolution_table(tables)
+    coverage = tables.get("id03_source_coverage_by_concurrency", pd.DataFrame())
+    scaling = tables.get("id03_h200_scaling_curve", pd.DataFrame())
+    matching = tables.get("id03_cross_concurrency_summary", pd.DataFrame())
+    distribution = tables.get("id03_c8_latency_distribution", pd.DataFrame())
+    source_buckets = tables.get("id03_c8_source_input_buckets", pd.DataFrame())
+    context_status = tables.get("id03_context_202752_subset_status", pd.DataFrame())
+    text = "# 11. ID03 public H200 deep dive\n\n"
+    text += "## Canonical ID resolution\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        f"- Primary trace: {canonical_id}. The requested prefix 07dd405 is accepted only because "
+        "the versioned resolution table reports a unique full source-trace ID.\n\n"
+    )
+    text += _table(resolution) + "\n\n"
+    text += "## c8 / c12 / c16 source-turn coverage\n\n"
+    text += "### Evidence\n\n"
+    text += _table(
+        _select(
+            coverage,
+            [
+                "concurrency",
+                "all_request_count",
+                "warmup_count",
+                "profiling_phase_count",
+                "successful_profiling_count",
+                "distinct_exact_source_key_count_profile",
+                "source_coverage_ratio_profile",
+                "source_request_index_min",
+                "source_request_index_max",
+                "source_input_tokens_min",
+                "source_input_tokens_max",
+                "wall_span_s",
+                "error_count",
+                "cancellation_count",
+                "duplicate_exact_source_key_count_profile",
+            ],
+        )
+    )
+    text += "\n\n### Replay scheduling evidence\n\n"
+    text += _id03_scheduling_evidence_text(tables)
+    text += _id03_source_turn_detail_text(coverage)
+    text += "\n## Inference\n\n"
+    text += (
+        "- c8 is the primary public comparison reference because it covers all 119 distinct ID03 "
+        "source keys as successful profiling requests and has 119 ITL-valid requests. c12 covers "
+        "112/119 keys after seven ID03 warmup rows; c16 covers 13/119 profiling keys and is a "
+        "late-tail subset rather than a whole-trace estimate.\n"
+    )
+    text += (
+        "- The fixed 3,600-second profiling window, randomized trajectory start positions, warmup "
+        "handoff, recycling, and mixed-workload scheduling are evidence-backed contributors to coverage "
+        "differences. They do not identify one sufficient cause for every missing ID03 source key.\n"
+    )
+    text += "\n## Unknown\n\n"
+    text += (
+        "- The public data does not expose the counterfactual schedule that would prove exactly why a "
+        "specific key was absent in a run, nor does it make the c16 tail a random or representative "
+        "sample of the full ID03 trace.\n\n"
+    )
+    text += "## Exact c8 ↔ c12 ↔ c16 request matching\n\n"
+    text += "### Evidence\n\n"
+    text += _table(matching) + "\n\n"
+    text += (
+        "- Matching key: source_trace_id + source_outer_idx + source_inner_idx. Source conversation "
+        "path and turn index are retained as validation fields. Pair rows first collapse repeated "
+        "source-key/concurrency records before ratios.\n"
+        "- Full reviewable pair data: ../processed/id03_exact_match_c8_c12.csv, "
+        "../processed/id03_exact_match_c8_c16.csv, ../processed/id03_exact_match_c12_c16.csv, and "
+        "../processed/id03_exact_match_all.csv.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- On the large c8↔c12 overlap, median TTFT rises while weighted ITL changes modestly. "
+        "The c8↔c16 overlap is only 13 exact keys, so it supports a tail-subset comparison rather "
+        "than a full-trace concurrency curve.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- Matching a source key controls workload identity, not all system state, queue position, "
+        "MTP behavior, route, or cache residency. It cannot isolate a pure concurrency effect.\n\n"
+    )
+    text += "## ID03 H200 scaling curve\n\n"
+    text += "### Evidence\n\n"
+    text += _table(scaling) + "\n\n"
+    text += (
+        "- TTFT inflation is relative to ID03 c8. TPS retention is based on output-transition-token-"
+        "weighted ITL; wall output TPS is a parallel-system rate and is intentionally distinct.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- c12/c16 preserve much of the observed active decode TPS for the covered keys, whereas "
+        "TTFT and wall-output outcomes are more coverage- and scheduling-sensitive. This is not an "
+        "apples-to-apples local scaling conclusion.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- No per-ID GPU allocation, GPU utilization, or fixed worker affinity follows from this "
+        "curve; the public run is a shared 32×H200 system.\n\n"
+    )
+    text += "## c8 latency and workload-shape reference\n\n"
+    text += "### Evidence\n\n"
+    text += _table(distribution) + "\n\n"
+    text += "### Source-workload input proxy buckets\n\n"
+    text += _table(source_buckets) + "\n\n"
+    text += (
+        "- The plotted c8 ordinal curves are in ../figures/id03_source_input_vs_ordinal.png, "
+        "../figures/id03_ttft_vs_ordinal.png, ../figures/id03_itl_vs_ordinal.png, and "
+        "../figures/id03_output_tokens_vs_ordinal.png.\n"
+        "- Source input tokens are a workload proxy only. They are not target GLM logical context "
+        "tokens or a measured GPU prefill-throughput denominator.\n\n"
+    )
+    text += "## 202,752-context compatible subset\n\n"
+    text += "### Evidence\n\n"
+    text += _table(context_status) + "\n\n"
+    text += (
+        "- The companion CSV ../processed/id03_context_202752_compatible_requests.csv is intentionally "
+        "header-only when the exact target-tokenization fit condition cannot be evaluated.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- A future local comparison must use exact local target logical prompt tokens plus requested "
+        "output limit, or the documented loader/server fit rule, before declaring a public request "
+        "compatible with max_model_len 202752.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- No request-level target-model logical prompt metric, requested output limit, or joinable "
+        "frontend metric exists in the public profile package. input_sequence_length and source_input_tokens "
+        "must not be substituted for that missing condition.\n\n"
+    )
+    text += "## Why ID03 is the primary local-comparison candidate\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        "- ID03 has whole-trace c8 profiling coverage, 119 ITL-valid c8 observations, per-source-key "
+        "c8/c12/c16 exact-match exports, and c8 latency/output-shape distributions.\n"
+        "- The canonical public request reference is ../processed/id03_h200_reference_requests.csv.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- This makes ID03 the strongest available public H200 reference for a later local cpy comparison, "
+        "provided the local extractor demonstrates matching source keys and workload semantics.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- It does not make public c8 equivalent to local cpy8: public c8 is mixed-root global concurrency "
+        "on 2P2D 32×H200 with MTP, whereas the meaning of local cpy labels still requires raw local "
+        "configuration and request evidence.\n"
+    )
+    _write(path, text)
+
+
+def _write_id03_local_cpy_plan(path: Path, tables: dict[str, pd.DataFrame]) -> None:
+    """Write an evidence contract, not a fabricated local-server analysis."""
+
+    canonical_id = _id03_canonical_id(tables)
+    scaling = tables.get("id03_h200_scaling_curve", pd.DataFrame())
+    text = "# 12. ID03 local cpy comparison plan\n\n"
+    text += "## Public reference selected for the later comparison\n\n"
+    text += "### Evidence\n\n"
+    text += f"- Canonical ID03 source trace: {canonical_id}.\n\n"
+    text += _table(scaling) + "\n\n"
+    text += (
+        "- Public c8 is the primary H200 reference because it has full ID03 source-key profiling coverage. "
+        "Its request-level source-key table is ../processed/id03_h200_reference_requests.csv.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- Later analysis should compare both absolute matched-request values and scaling direction, "
+        "not promote public c8 and local cpy8 to equivalent workloads.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- No local raw logs or local cpy measurements are present in this public study. No local metric "
+        "is calculated here.\n\n"
+    )
+    text += "## Meaning of local cpy1–cpy8 to verify first\n\n"
+    text += "### Required local evidence for every cpy label\n\n"
+    text += (
+        "- cpy label; configured concurrency; observed maximum simultaneous requests; independent root-session "
+        "count; distinct conversation-ID count; source-trace-ID count; request and successful-request counts "
+        "per copy; start timestamps; and end timestamps.\n"
+        "- Show whether each copy executes the canonical ID03 sequence independently and whether AIPerf "
+        "concurrency is actually N for cpyN.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- Whether cpyN is a same-trace replication label, global concurrency N, or N independent "
+        "sessions remains unknown until the preceding fields are extracted from local config/logs.\n\n"
+    )
+    text += "## Exact join contract\n\n"
+    text += (
+        "- Read ../handoff/id03_local_join_contract.md before extracting local data. The canonical exact key is "
+        "source_trace_id + source_outer_idx + source_inner_idx. Source conversation path and turn index validate "
+        "the candidate match; a missing or conflicting validation field must be reported rather than silently "
+        "accepted.\n"
+        "- For a strict TTFT subset: exact key, successful request on both systems, and both TTFT values. "
+        "For a strict decode subset: strict TTFT conditions plus output_tokens > 1, ITL present, and equal observed "
+        "output length.\n\n"
+    )
+    text += "## Context-limit contract\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        "- Public H200 uses a 1,048,576-token context; the stated local maximum is 202,752. The public "
+        "202,752-compatible subset status is unavailable_exact_target_tokenization.\n\n"
+    )
+    text += "### Required local/public fit rule\n\n"
+    text += (
+        "- Use target logical prompt tokens + requested output limit <= 202752, or a documented exact loader/server "
+        "fit condition. Do not replace target logical prompt tokens with public input_sequence_length or "
+        "source_input_tokens.\n\n"
+    )
+    text += "## Metrics to calculate after local extraction\n\n"
+    text += (
+        "| Area | Required comparable metrics |\n"
+        "| --- | --- |\n"
+        "| Coverage | successful/transmitted/failed requests; first/last successful exact key; first failed key; context-overflow position |\n"
+        "| Tokens | total/mean/median/max input with semantics; cache read/load/store with scope; output tokens |\n"
+        "| TTFT | mean, median, P90, P95, max (ms) |\n"
+        "| Decode | ITL sample count; weighted ITL; weighted decode TPS; median decode TPS |\n"
+        "| End-to-end | E2E mean/median/P90; wall span; wall output TPS |\n"
+        "| System | GPU utilization; HBM used/free; KV block/token use; scheduler running/waiting requests, if available |\n\n"
+    )
+    text += "## Scaling definitions\n\n"
+    text += (
+        "- Local TPS retention at cpyN = weighted_decode_tps_cpyN / weighted_decode_tps_cpy1.\n"
+        "- Local median TTFT inflation at cpyN = median_ttft_cpyN / median_ttft_cpy1.\n"
+        "- Local wall-throughput scaling at cpyN = wall_output_tps_cpyN / wall_output_tps_cpy1.\n"
+        "- Public ID03 reference direction uses c8 as baseline: c12/c8 and c16/c8 in "
+        "../processed/id03_h200_scaling_curve.csv.\n\n"
+    )
+    text += "## Interpretation boundaries\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        "- Public c8/c12/c16 is a mixed-root 2P2D, 32×H200, MTP-enabled replay. The public table retains "
+        "coverage differences and MTP behavior.\n\n"
+    )
+    text += "### Inference\n\n"
+    text += (
+        "- Scaling behavior (where TTFT inflates, whether ITL/TPS retains, and wall-throughput changes) may be "
+        "more informative than an unqualified absolute hardware ratio.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- Without local topology, MTP, KV, context-fit, and request-level evidence, no apples-to-apples "
+        "hardware-efficiency or causal cache conclusion is allowed.\n"
+    )
+    _write(path, text)
+
+
+def _id03_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
+    """Keep the primary local-comparison evidence near the top-level handoff."""
+
+    canonical_id = _id03_canonical_id(tables)
+    scaling = tables.get("id03_h200_scaling_curve", pd.DataFrame())
+    matching = tables.get("id03_cross_concurrency_summary", pd.DataFrame())
+    coverage = tables.get("id03_source_coverage_by_concurrency", pd.DataFrame())
+    context_status = tables.get("id03_context_202752_subset_status", pd.DataFrame())
+    return (
+        "\n\n## ID03 Deep Dive\n\n"
+        "### Evidence\n\n"
+        f"- Canonical ID: {canonical_id}.\n"
+        "### Public c8/c12/c16 coverage\n\n"
+        + _table(
+            _select(
+                coverage,
+                [
+                    "concurrency",
+                    "profiling_phase_count",
+                    "successful_profiling_count",
+                    "distinct_exact_source_key_count_profile",
+                    "source_coverage_ratio_profile",
+                    "warmup_count",
+                ],
+            )
+        )
+        + "\n\n### TTFT / TPS scaling\n\n"
+        + _table(
+            _select(
+                scaling,
+                [
+                    "concurrency",
+                    "ttft_median_ms",
+                    "ttft_p90_ms",
+                    "weighted_decode_tps",
+                    "itl_sample_count",
+                    "ttft_inflation_vs_c8",
+                    "tps_retention_vs_c8",
+                    "wall_throughput_ratio_vs_c8",
+                ],
+            )
+        )
+        + "\n\n### Exact overlap\n\n"
+        + _table(
+            _select(
+                matching,
+                [
+                    "pair",
+                    "matched_source_key_count",
+                    "same_output_length_count",
+                    "strict_ttft_count",
+                    "strict_decode_count",
+                    "median_ttft_ratio_right_over_left",
+                    "weighted_itl_ratio_right_over_left",
+                    "coverage_overlap_ratio_jaccard",
+                ],
+            )
+        )
+        + "\n\n### Context/token metric limitation\n\n"
+        + _table(context_status)
+        + "\n\n- Raw AIPerf log scheduling evidence is in "
+        "processed/id03_replay_scheduling_evidence.csv; it documents time-limited profiling, "
+        "randomized starts, warmup handoff, and recycling without claiming a single causal mechanism.\n"
+        "### Inference\n\n"
+        "- c8 is the primary public reference because it has full observed ID03 source-key profiling "
+        "coverage and enough ITL-valid requests for a reviewable decode-TPS distribution; c12/c16 retain "
+        "narrower matched subsets.\n\n"
+        "### Unknown\n\n"
+        "- The public package has no request-level target logical prompt token metric "
+        "or requested output limit, so a 202,752-compatible exact subset is unavailable.\n"
+        "- Public c8 is mixed-root global concurrency on 2P2D 32×H200 with MTP. "
+        "It is not established as equivalent to any local cpyN label.\n\n"
+        "### Files for ID03 comparison\n\n"
+        "1. studies/h200_gpu_resident_mtp/reports/11_id03_deep_dive.md\n"
+        "2. studies/h200_gpu_resident_mtp/reports/12_id03_local_cpy_comparison_plan.md\n"
+        "3. studies/h200_gpu_resident_mtp/processed/id03_h200_reference_requests.csv\n"
+        "4. studies/h200_gpu_resident_mtp/processed/id03_source_coverage_by_concurrency.csv\n"
+        "5. studies/h200_gpu_resident_mtp/processed/id03_cross_concurrency_summary.csv\n"
+        "6. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c8_c12.csv\n"
+        "7. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c8_c16.csv\n"
+        "8. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c12_c16.csv\n"
+        "9. studies/h200_gpu_resident_mtp/handoff/id03_local_join_contract.md\n"
+    )
+
+
+def _write_id03_local_join_contract(handoff: Path, canonical_id: str) -> None:
+    """Write a portable contract for a private extractor; it contains no local measurements."""
+
+    text = "# ID03 local cpy join contract\n\n"
+    text += "## Scope\n\n"
+    text += (
+        f"- Public comparison trace: {canonical_id}.\n"
+        "- This is an extraction and matching contract for a later private analysis. It is not a "
+        "claim that any local cpy label equals public H200 concurrency.\n\n"
+    )
+    text += "## Required local fields\n\n"
+    text += (
+        "| Group | Fields |\n"
+        "| --- | --- |\n"
+        "| Copy identity | local_run_label; local_copy_label; local_copy_index; configured_concurrency; observed_max_simultaneous_requests; independent_root_session_count; conversation_id; session_num |\n"
+        "| Source identity | source_trace_id; source_outer_idx; source_inner_idx; source_conversation_path; turn_index; source_branch_type; source_branch_request_index |\n"
+        "| Timing and routing | local_raw_record_ordinal; local_source_file_or_log_partition; request_start; request_end; request ID/correlation ID if available; worker/routing ID |\n"
+        "| Token semantics | input_tokens; input_token_semantics; cache_read_tokens; cache_read_metric_semantics; cache_write_tokens; cache_write_metric_semantics; output_tokens; requested_output_limit; context_fit_rule_or_config_source |\n"
+        "| Outcome and filtering | ttft_ms; itl_ms; e2e_ms; success; success_filter_version; error; error_text_or_category; context_overflow |\n\n"
+    )
+    text += "## Canonical exact key\n\n"
+    text += (
+        "source_trace_id + source_outer_idx + source_inner_idx\n\n"
+        "- Preserve raw source indices and also publish normalized join fields. The public reference uses "
+        "`source_inner_idx_exact_key_normalized=-1` for a documented root-level null inner index. "
+        "Use -1 only for that established root-level-null case; do not invent a sentinel when the local "
+        "source-inner value is genuinely unknown.\n"
+        "- source_conversation_path and turn_index are validation fields. Report match_validation_status "
+        "as `high_confidence_exact`, `key_match_validation_missing`, `key_match_validation_conflict`, or "
+        "`unmatched` rather than silently accepting a conflict.\n"
+        "- Preserve local_copy_label and local_copy_index outside the exact key. They identify separate "
+        "local replay instances and must not be deduplicated as if they were duplicate requests.\n\n"
+    )
+    text += "## Required cpy1–cpy8 semantics check\n\n"
+    text += (
+        "- For each label, report configured concurrency, observed maximum simultaneous requests, "
+        "independent root sessions, distinct conversation IDs, source trace IDs, requests per copy, "
+        "successful requests per copy, and start/end timestamps.\n"
+        "- Only then determine whether cpy8 means eight independent same-trace sessions, AIPerf "
+        "concurrency 8, another copy mechanism, or an unknown experiment label.\n\n"
+    )
+    text += "## Strict comparison subsets\n\n"
+    text += (
+        "- Strict TTFT: high-confidence exact key, successful request in both systems, TTFT present.\n"
+        "- Strict decode: strict TTFT conditions, output_tokens > 1, ITL present, and equal observed output "
+        "length. Keep output-length-different rows for coverage analysis but not strict ITL/TPS ratios.\n"
+        "- Keep unmatched, key-match-validation-missing, key-match-validation-conflict, error, cancellation, and context-overflow "
+        "rows as explicit categories.\n\n"
+    )
+    text += "## Context-fit rule\n\n"
+    text += (
+        "- A local 202,752-context compatibility label requires target logical prompt tokens plus requested "
+        "output limit <= 202752, or the exact documented loader/server fit condition. Do not use source "
+        "input tokens or public profile input_sequence_length as substitutes.\n\n"
+    )
+    text += "## Post-extraction metric definitions\n\n"
+    text += (
+        "- weighted ITL = sum(itl_ms * (output_tokens - 1)) / sum(output_tokens - 1) for valid decode rows.\n"
+        "- weighted decode TPS = 1000 / weighted ITL.\n"
+        "- wall span = max(request_end) - min(request_start); wall output TPS = total output tokens / wall span.\n"
+        "- cpyN TPS retention = weighted_decode_tps_cpyN / weighted_decode_tps_cpy1; median TTFT inflation "
+        "= median_ttft_cpyN / median_ttft_cpy1.\n\n"
+    )
+    text += "## Interpretation guardrails\n\n"
+    text += (
+        "- Public H200 c8/c12/c16 is mixed-root, P/D-disaggregated, 32×H200, and MTP-enabled. "
+        "Local cpy data may have a different workload composition, topology, MTP state, and context limit.\n"
+        "- Treat source model labels as workload provenance only. Do not infer GPU affinity, per-ID GPU count, "
+        "or a causal HiSparse/KV/MTP contribution from this contract.\n"
+    )
+    _write(handoff / "id03_local_join_contract.md", text)
 
 
 def _build_handoff(
@@ -252,11 +775,19 @@ def _build_handoff(
         + _table(ids)
         + "\n\n## ID01 Key Metrics\n\n"
         + _requested_metrics_table(tables.get("id01_by_concurrency", pd.DataFrame()))
+        + "\n\n- **Evidence:** ID01 c8 has one ITL-valid request. Its weighted decode TPS is descriptive "
+        "only (n=1) and is excluded from the default comparative TPS figure.\n"
         + "\n\n## ID02 Key Metrics\n\n"
         + _requested_metrics_table(tables.get("id02_by_concurrency", pd.DataFrame()))
-        + "\n\n- **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` as an observed raw counter, but neither it nor `cache_load_tps` is a validated logical-prompt or physical-KV metric.\n"
+        + _id03_handoff_text(tables)
+        + "\n\n- **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` only as a raw profile counter; `raw_profile_cache_counter_tps` is not a validated logical-prompt or physical-KV metric.\n"
         + "\n\n## HiSparse c8 vs GPU-resident c8\n\n"
         + _table(comparison)
+        + "\n\n## Approximate worker-normalized H200 context\n\n"
+        + _table(tables.get("h200_worker_normalized_comparisons", pd.DataFrame()))
+        + "\n\n- **Inference:** these rows align one HiSparse decode worker with two GPU-resident "
+        "MTP decode workers only as an architectural context. Routing and active load are not proven "
+        "equal, and every other system difference remains confounded.\n"
         + "\n\n## User 2GPU Contextual Comparison\n\n"
         + _table(tables.get("local_2gpu_user_reported_reference", pd.DataFrame()))
         + "\n\n## Evidence\n\n"
@@ -284,6 +815,7 @@ def _build_handoff(
         "11. `studies/h200_gpu_resident_mtp/manifests/provenance.json`\n"
         "12. `studies/h200_gpu_resident_mtp/handoff/local_server_evidence_needed.md`\n",
     )
+    _write_id03_local_join_contract(handoff, _id03_canonical_id(tables))
     resolved_ids = [
         str(value)
         for value in ids.get("resolved_full_source_trace_id", pd.Series(dtype="string")).dropna()
@@ -303,6 +835,25 @@ def _build_handoff(
         checklist += "- Confirm whether each resolved public ID appears in local data: " + ", ".join(f"`{v}`" for v in resolved_ids) + ".\n"
     else:
         checklist += "- Requested public IDs were not yet resolved in available public data.\n"
+    checklist += "\n## ID03 cpy1–cpy8 evidence contract\n\n"
+    checklist += (
+        "- For each local label 07dd405_cpy1 through 07dd405_cpy8, extract configured concurrency; "
+        "observed maximum simultaneous requests; independent root-session count; distinct conversation IDs; "
+        "source-trace-ID count; request/success count per copy; and start/end timestamps.\n"
+    )
+    checklist += (
+        "- Verify whether cpyN means N copies of the same canonical trace, AIPerf concurrency N, or something "
+        "else. Until that proof exists, do not write cpyN == concurrency N as Evidence.\n"
+    )
+    checklist += (
+        "- Extract the exact join fields and metric semantics in handoff/id03_local_join_contract.md, including "
+        "source indices, source path/turn validation, TTFT, ITL, E2E, output length, cache counters, success, "
+        "error, and context-overflow status.\n"
+    )
+    checklist += (
+        "- Apply the 202,752 context-fit rule only with target logical prompt tokens plus requested output limit "
+        "or a documented loader/server rule; do not substitute public source-input or profile input sequence tokens.\n"
+    )
     checklist += "\n## Why these fields matter\n\n"
     checklist += "- Public MTP replay exposes a profile cache counter whose ratio to usage prompt tokens can exceed one, so exact local metric scope is essential before comparison.\n"
     checklist += "- Physical KV allocation and MTP acceptance require startup/runtime evidence rather than architecture assumptions.\n"
@@ -324,6 +875,52 @@ def _write_korean_summary(
     text += "- **Unknown:** conversation ID는 GPU affinity나 ID별 GPU 수를 뜻하지 않는다.\n\n"
     text += "# ID coverage\n\n" + _table(ids) + "\n\n"
     text += "# ID별 성능 핵심 결과\n\n" + _requested_tables_text(tables) + "\n\n"
+    text += "# ID03 Deep Dive 및 사내 cpy 비교 준비\n\n"
+    text += (
+        "- **Evidence:** ID03 prefix 07dd405는 "
+        f"{_id03_canonical_id(tables)}로 unique resolution되었다. c8/c12/c16의 source-key "
+        "coverage, request-level reference, exact-match table, latency distribution을 별도 version했다.\n\n"
+    )
+    text += _table(
+        _select(
+            tables.get("id03_h200_scaling_curve", pd.DataFrame()),
+            [
+                "concurrency",
+                "profile_request_count",
+                "coverage_ratio",
+                "ttft_median_ms",
+                "ttft_p90_ms",
+                "weighted_decode_tps",
+                "itl_sample_count",
+                "ttft_inflation_vs_c8",
+                "tps_retention_vs_c8",
+            ],
+        )
+    ) + "\n\n"
+    text += _table(
+        _select(
+            tables.get("id03_cross_concurrency_summary", pd.DataFrame()),
+            [
+                "pair",
+                "matched_source_key_count",
+                "strict_ttft_count",
+                "strict_decode_count",
+                "median_ttft_ratio_right_over_left",
+                "weighted_itl_ratio_right_over_left",
+                "coverage_overlap_ratio_jaccard",
+            ],
+        )
+    ) + "\n\n"
+    text += (
+        "- **Inference:** ID03 c8은 119개 profiling/ITL-valid source key를 갖는 primary public "
+        "reference다. c12는 112개, c16은 13개 profiling key만 cover하므로 c16은 full-trace "
+        "concurrency curve가 아니라 late-tail subset으로 해석한다.\n"
+        "- **Unknown:** public profile에는 request-level target logical prompt token 및 requested "
+        "output limit이 없어 202,752 context-compatible exact subset은 unavailable이다. "
+        "input_sequence_length 또는 source_input_tokens로 대체하지 않는다.\n"
+        "- **Unknown:** 사내 cpy1~cpy8 수치는 이 repository에 없으며 생성하지 않았다. 이후 계약은 "
+        "handoff/id03_local_join_contract.md와 reports/12_id03_local_cpy_comparison_plan.md를 따른다.\n\n"
+    )
     text += "# Concurrency c8 / c12 / c16 비교\n\n"
     text += "- 이 study의 public run은 c8/c12/c16이며, 고정 시간 replay이므로 coverage를 동반해 비교한다.\n"
     text += _table(_select(concurrency, [
@@ -511,7 +1108,11 @@ def _build_figures(figures: Path, tables: dict[str, pd.DataFrame]) -> None:
     for label in ("id01", "id02"):
         frame = tables.get(f"{label}_by_concurrency", pd.DataFrame())
         _line_plot(frame, "ttft_median_ms", f"{label.upper()} TTFT median (ms)", figures / f"{label}_ttft.png")
-        _line_plot(frame, "weighted_decode_tps", f"{label.upper()} weighted decode TPS (tok/s)", figures / f"{label}_tps.png")
+        _comparative_tps_plot(
+            frame,
+            f"{label.upper()} weighted decode TPS (tok/s)",
+            figures / f"{label}_tps.png",
+        )
     cache = tables.get("cache_metrics", pd.DataFrame())
     _line_plot(cache, "server_frontend_cache_hit_rate", "Server frontend cache hit rate", figures / "cache_read_ratio.png")
     mtp = tables.get("mtp_metrics", pd.DataFrame())
@@ -559,6 +1160,44 @@ def _comparison_plot(frame: pd.DataFrame, path: Path) -> None:
     ax.set_ylabel("tok/s")
     ax.set_title("Observed system-level c8 comparison (not causal)")
     ax.grid(axis="y", alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
+
+
+def _comparative_tps_plot(frame: pd.DataFrame, ylabel: str, path: Path) -> None:
+    """Suppress TPS lines where fewer than three ITL-valid requests support a point."""
+
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    required = {"concurrency", "weighted_decode_tps", "itl_sample_count"}
+    if not frame.empty and required.issubset(frame.columns):
+        data = frame.loc[pd.to_numeric(frame["itl_sample_count"], errors="coerce") >= 3].copy()
+        data = data[["concurrency", "weighted_decode_tps"]].dropna().sort_values("concurrency")
+        if not data.empty:
+            ax.plot(data["concurrency"], data["weighted_decode_tps"], marker="o")
+            for _, item in data.iterrows():
+                ax.annotate(
+                    f"{item['weighted_decode_tps']:.3g}",
+                    (item["concurrency"], item["weighted_decode_tps"]),
+                    xytext=(0, 7),
+                    textcoords="offset points",
+                    ha="center",
+                )
+        else:
+            ax.text(
+                0.5,
+                0.5,
+                "Suppressed: fewer than 3 ITL-valid requests per point\n(descriptive only)",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+            )
+    else:
+        ax.text(0.5, 0.5, "Unknown / no observed sample", ha="center", va="center", transform=ax.transAxes)
+    ax.set_xlabel("Requested concurrency")
+    ax.set_ylabel(ylabel)
+    ax.set_title(ylabel + " by concurrency")
+    ax.grid(alpha=0.25)
     fig.tight_layout()
     fig.savefig(path, dpi=160)
     plt.close(fig)
@@ -699,6 +1338,7 @@ def _requested_metrics_table(frame: pd.DataFrame) -> str:
                 "error_count",
                 "cancellation_count",
                 "sample_quality",
+                "decode_tps_comparison_status",
             ],
         )
     )
@@ -716,11 +1356,13 @@ def _requested_tables_text(tables: dict[str, pd.DataFrame]) -> str:
                 + _table(_select(frame, [
                     "root_trace_id", "concurrency", "profiled_request_count", "ttft_median_ms", "ttft_p90_ms",
                     "weighted_decode_tps", "wall_output_tps", "output_tokens_total", "error_count", "cancellation_count",
+                    "decode_tps_comparison_status",
                 ]))
             )
     chunks.append(
         "- **Scope warning:** raw `usage_prompt_cache_read_tokens` is retained in full per-ID CSVs, "
-        "but it is not a validated logical-cache ratio, physical KV-load metric, or `cache_load_tps` basis."
+        "and `raw_profile_cache_counter_tps`, where present, is an unvalidated raw-profile-counter rate. "
+        "Neither is a logical-cache ratio, physical KV-load metric, or cache-load throughput."
     )
     return "\n\n".join(chunks)
 

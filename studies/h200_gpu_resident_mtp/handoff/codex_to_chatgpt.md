@@ -127,34 +127,119 @@
 
 ## ID01 Key Metrics
 
-| root_trace_id | concurrency | all_request_count | warmup_count | profiled_request_count | output_tokens_total | ttft_mean_ms | ttft_median_ms | ttft_p90_ms | itl_sample_count | weighted_decode_tps | e2e_median_ms | wall_span_s | wall_output_tps | error_count | cancellation_count | sample_quality |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 8 | 69 | 11 | 58 | 941 | 13250.4 | 9300.9 | 31640.6 | 1 | 93.4123 | 9649.18 | 3276.51 | 0.287196 | 0 | 0 | observed |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 12 | 56 | 11 | 45 | 45 | 29698.6 | 29178.2 | 41582.9 | 0 |  | 29178.2 | 3290.48 | 0.0136758 | 0 | 0 | observed |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 16 | 49 | 11 | 38 | 38 | 44346.4 | 32193.5 | 86996.6 | 0 |  | 32193.5 | 3276.45 | 0.0115979 | 0 | 0 | observed |
+| root_trace_id | concurrency | all_request_count | warmup_count | profiled_request_count | output_tokens_total | ttft_mean_ms | ttft_median_ms | ttft_p90_ms | itl_sample_count | weighted_decode_tps | e2e_median_ms | wall_span_s | wall_output_tps | error_count | cancellation_count | sample_quality | decode_tps_comparison_status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 8 | 69 | 11 | 58 | 941 | 13250.4 | 9300.9 | 31640.6 | 1 | 93.4123 | 9649.18 | 3276.51 | 0.287196 | 0 | 0 | observed | suppressed_n_lt_3_descriptive_only |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 12 | 56 | 11 | 45 | 45 | 29698.6 | 29178.2 | 41582.9 | 0 |  | 29178.2 | 3290.48 | 0.0136758 | 0 | 0 | observed | suppressed_n_lt_3_descriptive_only |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 16 | 49 | 11 | 38 | 38 | 44346.4 | 32193.5 | 86996.6 | 0 |  | 32193.5 | 3276.45 | 0.0115979 | 0 | 0 | observed | suppressed_n_lt_3_descriptive_only |
+
+- **Evidence:** ID01 c8 has one ITL-valid request. Its weighted decode TPS is descriptive only (n=1) and is excluded from the default comparative TPS figure.
+
 
 ## ID02 Key Metrics
 
-| root_trace_id | concurrency | all_request_count | warmup_count | profiled_request_count | output_tokens_total | ttft_mean_ms | ttft_median_ms | ttft_p90_ms | itl_sample_count | weighted_decode_tps | e2e_median_ms | wall_span_s | wall_output_tps | error_count | cancellation_count | sample_quality |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 8 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 12 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 16 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse |
+| root_trace_id | concurrency | all_request_count | warmup_count | profiled_request_count | output_tokens_total | ttft_mean_ms | ttft_median_ms | ttft_p90_ms | itl_sample_count | weighted_decode_tps | e2e_median_ms | wall_span_s | wall_output_tps | error_count | cancellation_count | sample_quality | decode_tps_comparison_status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 8 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse | suppressed_n_lt_3_descriptive_only |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 12 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse | suppressed_n_lt_3_descriptive_only |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 16 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse | suppressed_n_lt_3_descriptive_only |
 
-- **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` as an observed raw counter, but neither it nor `cache_load_tps` is a validated logical-prompt or physical-KV metric.
+## ID03 Deep Dive
+
+### Evidence
+
+- Canonical ID: 07dd40536557a1d6440a923557c3129dc929.
+### Public c8/c12/c16 coverage
+
+| concurrency | profiling_phase_count | successful_profiling_count | distinct_exact_source_key_count_profile | source_coverage_ratio_profile | warmup_count |
+| --- | --- | --- | --- | --- | --- |
+| 8 | 119 | 119 | 119 | 1 | 0 |
+| 12 | 112 | 112 | 112 | 0.941176 | 7 |
+| 16 | 13 | 13 | 13 | 0.109244 | 13 |
+
+### TTFT / TPS scaling
+
+| concurrency | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | itl_sample_count | ttft_inflation_vs_c8 | tps_retention_vs_c8 | wall_throughput_ratio_vs_c8 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 8 | 1080.57 | 3326.14 | 90.4544 | 119 | 1 | 1 | 1 |
+| 12 | 1729.72 | 17659.2 | 88.3243 | 112 | 1.60075 | 0.976452 | 0.488553 |
+| 16 | 1647.92 | 41057.6 | 87.6317 | 13 | 1.52505 | 0.968795 | 0.166771 |
+
+### Exact overlap
+
+| pair | matched_source_key_count | same_output_length_count | strict_ttft_count | strict_decode_count | median_ttft_ratio_right_over_left | weighted_itl_ratio_right_over_left | coverage_overlap_ratio_jaccard |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| c8_c12 | 112 | 112 | 112 | 112 | 1.45117 | 1.01475 | 0.941176 |
+| c8_c16 | 13 | 13 | 13 | 13 | 1.28084 | 1.041 | 0.109244 |
+| c12_c16 | 13 | 13 | 13 | 13 | 0.32583 | 1.0058 | 0.116071 |
+
+### Context/token metric limitation
+
+| context_202752_subset_status | reason | logical_prompt_metric_observed_row_count | forbidden_proxies | required_future_evidence |
+| --- | --- | --- | --- | --- |
+| unavailable_exact_target_tokenization | no_request_level_target_model_logical_prompt_metric_in_public_profile_or_join | 0 | input_sequence_length; source_input_tokens | exact target logical prompt tokens + requested output limit + documented loader/server fit rule |
+
+- Raw AIPerf log scheduling evidence is in processed/id03_replay_scheduling_evidence.csv; it documents time-limited profiling, randomized starts, warmup handoff, and recycling without claiming a single causal mechanism.
+### Inference
+
+- c8 is the primary public reference because it has full observed ID03 source-key profiling coverage and enough ITL-valid requests for a reviewable decode-TPS distribution; c12/c16 retain narrower matched subsets.
+
+### Unknown
+
+- The public package has no request-level target logical prompt token metric or requested output limit, so a 202,752-compatible exact subset is unavailable.
+- Public c8 is mixed-root global concurrency on 2P2D 32×H200 with MTP. It is not established as equivalent to any local cpyN label.
+
+### Files for ID03 comparison
+
+1. studies/h200_gpu_resident_mtp/reports/11_id03_deep_dive.md
+2. studies/h200_gpu_resident_mtp/reports/12_id03_local_cpy_comparison_plan.md
+3. studies/h200_gpu_resident_mtp/processed/id03_h200_reference_requests.csv
+4. studies/h200_gpu_resident_mtp/processed/id03_source_coverage_by_concurrency.csv
+5. studies/h200_gpu_resident_mtp/processed/id03_cross_concurrency_summary.csv
+6. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c8_c12.csv
+7. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c8_c16.csv
+8. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c12_c16.csv
+9. studies/h200_gpu_resident_mtp/handoff/id03_local_join_contract.md
+
+
+- **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` only as a raw profile counter; `raw_profile_cache_counter_tps` is not a validated logical-prompt or physical-KV metric.
 
 
 ## HiSparse c8 vs GPU-resident c8
 
-| comparison_scope | metric | hisparse_c8_value | gpu_resident_mtp_c8_value | gpu_resident_over_hisparse_ratio | sample_count | caveat |
-| --- | --- | --- | --- | --- | --- | --- |
-| run_level_unpaired_observed_system_difference | ttft_median_ms | 228708 | 1471.05 | 0.00643201 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | weighted_decode_tps | 32.5161 | 92.4771 | 2.84404 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | wall_output_tps | 23.5666 | 210.505 | 8.93234 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | output_tokens_total | 84618 | 760694 | 8.98974 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| source_key_matched_median_observed_system_ratio | ttft_ratio_gpu_resident_over_hisparse |  | 0.00880767 | 0.00880767 | 83 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
-| source_key_matched_median_observed_system_ratio | itl_ratio_gpu_resident_over_hisparse |  | 0.353382 | 0.353382 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
-| source_key_matched_median_observed_system_ratio | e2e_ratio_gpu_resident_over_hisparse |  | 0.0482293 | 0.0482293 | 83 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| comparison_scope | metric | hisparse_c8_value | gpu_resident_mtp_c8_value | gpu_resident_over_hisparse_ratio | hisparse_request_count | gpu_resident_request_count | exact_matched_source_key_count | strict_ttft_count | strict_decode_count | caveat |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| run_level_unpaired_observed_system_difference | ttft_median_ms | 228708 | 1471.05 | 0.00643201 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | weighted_decode_tps | 32.5161 | 92.4771 | 2.84404 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | wall_output_tps | 23.5666 | 210.505 | 8.93234 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | output_tokens_total | 84618 | 760694 | 8.98974 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| source_key_matched_median_observed_system_ratio | ttft_ratio_gpu_resident_over_hisparse |  | 0.00880767 | 0.00880767 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| source_key_matched_median_observed_system_ratio | itl_ratio_gpu_resident_over_hisparse |  | 0.353382 | 0.353382 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| source_key_matched_median_observed_system_ratio | e2e_ratio_gpu_resident_over_hisparse |  | 0.0482293 | 0.0482293 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+
+## Approximate worker-normalized H200 context
+
+| comparison_label | comparison_kind | comparison_scope | hisparse_concurrency | gpu_resident_mtp_concurrency | hisparse_decode_worker_count | gpu_resident_mtp_decode_worker_count | metric | hisparse_value | gpu_resident_mtp_value | gpu_resident_over_hisparse_ratio | hisparse_request_count | gpu_resident_request_count | hisparse_root_id_count | gpu_resident_root_id_count | hisparse_itl_sample_count | gpu_resident_itl_sample_count | exact_matched_source_key_count | same_output_length_count | strict_ttft_count | strict_decode_count | matching_method | worker_normalization_basis | caveat |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | ttft_median_ms | 3319.23 | 1471.05 | 0.44319 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | itl_weighted_ms | 34.7805 | 10.8135 | 0.310907 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | weighted_decode_tps | 28.7518 | 92.4771 | 3.2164 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | wall_output_tps | 67.038 | 210.505 | 3.14008 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | output_tokens_total | 243209 | 760694 | 3.12774 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 4 | 8 | 1 | 2 | ttft_ratio_gpu_resident_over_hisparse |  | 0.495075 | 0.495075 | 379 | 957 | 8 | 14 | 267 | 853 | 120 | 120 | 120 | 68 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 4 | 8 | 1 | 2 | itl_ratio_gpu_resident_over_hisparse |  | 0.337038 | 0.337038 | 379 | 957 | 8 | 14 | 267 | 853 | 120 | 120 | 120 | 68 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 4 | 8 | 1 | 2 | e2e_ratio_gpu_resident_over_hisparse |  | 0.318269 | 0.318269 | 379 | 957 | 8 | 14 | 267 | 853 | 120 | 120 | 120 | 68 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | ttft_median_ms | 228708 | 22688.7 | 0.0992037 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | itl_weighted_ms | 30.754 | 10.9083 | 0.354696 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | weighted_decode_tps | 32.5161 | 91.6733 | 2.81932 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | wall_output_tps | 23.5666 | 236.913 | 10.0529 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | output_tokens_total | 84618 | 859611 | 10.1587 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 8 | 16 | 1 | 2 | ttft_ratio_gpu_resident_over_hisparse |  | 0.110806 | 0.110806 | 219 | 969 | 11 | 24 | 167 | 853 | 54 | 54 | 54 | 35 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 8 | 16 | 1 | 2 | itl_ratio_gpu_resident_over_hisparse |  | 0.355862 | 0.355862 | 219 | 969 | 11 | 24 | 167 | 853 | 54 | 54 | 54 | 35 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 8 | 16 | 1 | 2 | e2e_ratio_gpu_resident_over_hisparse |  | 0.114997 | 0.114997 | 219 | 969 | 11 | 24 | 167 | 853 | 54 | 54 | 54 | 35 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+
+- **Inference:** these rows align one HiSparse decode worker with two GPU-resident MTP decode workers only as an architectural context. Routing and active load are not proven equal, and every other system difference remains confounded.
+
 
 ## User 2GPU Contextual Comparison
 
