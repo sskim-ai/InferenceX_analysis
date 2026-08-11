@@ -966,6 +966,61 @@ def _cluster_metric(tables: dict[str, pd.DataFrame], metric: str) -> tuple[str, 
     return _cell(match.iloc[0]["value"]), _cell(match.iloc[0]["status"])
 
 
+def _decode_selected_timeslice_field(tables: dict[str, pd.DataFrame]) -> str:
+    """Return the raw field selected by the reconstruction, without guessing.
+
+    The extractor versions the field semantics separately from the reconstructed
+    summaries.  Keep this defensive because an older processed directory may not
+    have the new audit CSV yet.
+    """
+
+    frame = tables.get("c8_decode_timeslice_field_semantics", pd.DataFrame())
+    if frame.empty:
+        return "Unknown"
+    for column in (
+        "selected_field_under_current_parser",
+        "timeslice_selected_field",
+        "selected_field",
+    ):
+        if column not in frame:
+            continue
+        values = [
+            str(value)
+            for value in frame[column].dropna().astype("string").unique().tolist()
+            if str(value) and str(value).lower() != "unknown"
+        ]
+        if len(values) == 1:
+            return values[0]
+        if len(values) > 1:
+            return "mixed"
+    return "Unknown"
+
+
+def _decode_cluster_queue_summary(frame: pd.DataFrame) -> pd.DataFrame:
+    """Render generic and P/D-specific decode queues side by side.
+
+    `waiting_requests` is the reconstructed generic SGLang queue.  The separate
+    preallocation and transfer counters deliberately remain separate rows so a
+    zero generic queue can never hide nonzero P/D queue activity.
+    """
+
+    if frame.empty or "metric" not in frame:
+        return pd.DataFrame()
+    labels = {
+        "waiting_requests": "Generic SGLang `num_queue_reqs`",
+        "decode_prealloc_queue_requests": "Decode preallocation queue",
+        "decode_transfer_queue_requests": "Decode transfer queue",
+    }
+    view = frame.loc[frame["metric"].astype("string").isin(labels)].copy()
+    if view.empty:
+        return view
+    view["queue_metric"] = view["metric"].map(labels)
+    return _select(
+        view,
+        ["queue_metric", "max", "p90", "positive_fraction", "status", "notes"],
+    )
+
+
 def _write_c8_scheduler_worker_cluster_report(path: Path, tables: dict[str, pd.DataFrame]) -> None:
     """Render the rank-semantic reconstruction without collapsing metric scopes."""
 
@@ -975,6 +1030,9 @@ def _write_c8_scheduler_worker_cluster_report(path: Path, tables: dict[str, pd.D
     decode_rank = tables.get("c8_decode_rank_scheduler_summary", pd.DataFrame())
     decode_worker = tables.get("c8_decode_worker_scheduler_summary", pd.DataFrame())
     decode_cluster = tables.get("c8_decode_cluster_scheduler_summary", pd.DataFrame())
+    decode_field_semantics = tables.get("c8_decode_timeslice_field_semantics", pd.DataFrame())
+    decode_field_sensitivity = tables.get("c8_decode_cluster_field_sensitivity", pd.DataFrame())
+    decode_alignment = tables.get("c8_decode_timeslice_alignment_summary", pd.DataFrame())
     crosscheck = tables.get("c8_dynamo_sglang_concurrency_crosscheck", pd.DataFrame())
     primary = tables.get("c8_cluster_scheduler_reconstruction", pd.DataFrame())
     source = tables.get("c8_scheduler_source_semantics", pd.DataFrame())
@@ -985,12 +1043,15 @@ def _write_c8_scheduler_worker_cluster_report(path: Path, tables: dict[str, pd.D
     decode_wait, _ = _cluster_metric(tables, "decode_cluster_max_waiting")
     global_max, global_status = _cluster_metric(tables, "unique_global_running_max")
     http_max, _ = _cluster_metric(tables, "http_max_inflight")
+    timeslice_field = _decode_selected_timeslice_field(tables)
+    decode_queues = _decode_cluster_queue_summary(decode_cluster)
 
     text = "# 15. c8 SGLang worker / cluster scheduler reconstruction\n\n"
     text += "## Scope\n\n"
     text += (
         "- This analysis uses only public c8 run 31235207041 server-metrics and server-log evidence. "
-        "All gauges are AIPerf-exported one-second timeslice averages within the profiling window.\n"
+        "Backend scheduler exports are AIPerf one-second timeslice bins within the profiling window; "
+        "the selected raw field is audited below rather than assumed to be an instantaneous scrape.\n"
         "- `HTTP in-flight`, Dynamo work-handler inflight, SGLang scheduler waiting/running, and GPU/DP-rank "
         "scope are deliberately separate quantities.\n\n"
     )
@@ -1057,15 +1118,56 @@ def _write_c8_scheduler_worker_cluster_report(path: Path, tables: dict[str, pd.D
     text += (
         f"- Independent decode-worker counters are intersected over their actual endpoint timeslice intervals; "
         f"no nearest-neighbor matching, forward-fill, or unrelated-timestamp maxima are used. Decode-stage "
-        f"cluster running max/P90 are **{decode_max}/{decode_p90}** ({decode_max_status}); named generic "
-        f"`num_queue_reqs` cluster max is **{decode_wait}**.\n\n"
+        f"occupancy P90 is **{decode_p90}** ({decode_max_status}); its **highest reconstructed 1-s-bin sum is "
+        f"{decode_max}**, not an instantaneous unique-request maximum. Named generic `num_queue_reqs` "
+        f"cluster max is **{decode_wait}**.\n\n"
     )
     text += _table(decode_cluster) + "\n\n"
+    text += "### Decode queues in the same scope\n\n"
+    text += _table(decode_queues) + "\n\n"
     text += "### Scope caveat\n\n"
     text += (
         "- `sglang:num_queue_reqs=0` applies to that generic decode scheduler waiting queue. PD-specific "
-        "preallocation/transfer queue gauges are different counters and are not added to it. This is decode-stage "
-        "scheduler occupancy, not GPU sequences or unique system-wide requests.\n\n"
+        "preallocation/transfer queue gauges are different counters and are not added to it. A zero generic "
+        "queue is therefore not evidence that all decode/P-D queues were zero. This is decode-stage scheduler "
+        "occupancy, not GPU sequences or unique system-wide requests.\n\n"
+    )
+    text += "## Decode occupancy bin semantics\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        "- Raw field availability and the extractor's selected-field precedence are versioned below. "
+        f"The current reconstruction selected **`{timeslice_field}`** where the audit CSV makes that determinable.\n\n"
+    )
+    text += _table(
+        _select(
+            decode_field_semantics,
+            [
+                "metric", "worker_id", "rank", "timeslice_count", "avg_present_fraction",
+                "last_present_fraction", "max_present_fraction", "value_present_fraction",
+                "min_present_fraction", "avg_fractional_value_count", "avg_differs_from_max_count",
+                "selected_field_under_current_parser",
+            ],
+        )
+    ) + "\n\n"
+    text += "### Field sensitivity\n\n"
+    text += _table(decode_field_sensitivity) + "\n\n"
+    text += "### Worker-timeslice alignment\n\n"
+    text += _table(decode_alignment) + "\n\n"
+    text += "### Interpretation\n\n"
+    text += (
+        "- The preferred public label is **decode reconstructed occupancy**: a sum over overlapping exported "
+        "one-second scheduler-occupancy bins. Its highest value is not an instantaneous client/HTTP maximum, "
+        "not an instantaneous SGLang request count, and not a unique P/D global request count.\n"
+        "- Worker bins are combined only by exact `[start_ns, end_ns)` interval intersection; the alignment table "
+        "shows the observed scrape-offset and intersection-duration distribution. No nearest-neighbor join, "
+        "forward-fill, or cross-worker point-sample maximum is used.\n"
+        "- The sensitivity table intentionally reports only raw fields actually present in the export; a missing "
+        "`last` or `max` field is not silently substituted with another field.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- The public timeslice export does not provide per-bin logical request identities or a request-correlated "
+        "P/D lifecycle. It cannot turn the highest bin sum into an instantaneous unique-request maximum.\n\n"
     )
     text += "## Dynamo cross-validation\n\n"
     text += "### Evidence\n\n"
@@ -1103,7 +1205,8 @@ def _write_c8_scheduler_worker_cluster_report(path: Path, tables: dict[str, pd.D
         "- **Q1:** Prefill TP8 `num_running_reqs` is neither eight independently summable counts nor a proven "
         "single duplicated worker gauge; it is CP-rank local scheduler evidence.\n"
         "- **Q4:** Decode DP rank counters are independent scheduler shards for this TP8/DP8 DP-attention runtime.\n"
-        f"- **Q5:** Decode worker and decode-stage cluster running can be summed in their stated scope; cluster max={decode_max}, P90={decode_p90}.\n"
+        f"- **Q5:** Decode worker and decode-stage cluster occupancy can be summed in their stated scope; "
+        f"P90={decode_p90} and highest reconstructed 1-s-bin sum={decode_max}.\n"
         "- **Q6:** Every observed decode `sglang:num_queue_reqs` raw DP-rank sample is zero; this does not cover separate PD-specific queues.\n"
         f"- **Q7:** The highest confirmed backend scope is decode-stage cluster scheduler occupancy. HTTP max remains a separate {http_max}-request client interval overlap.\n\n"
     )
@@ -1128,11 +1231,14 @@ def _write_c8_scheduler_worker_cluster_report(path: Path, tables: dict[str, pd.D
         "5. `../processed/c8_decode_rank_scheduler_summary.csv`\n"
         "6. `../processed/c8_decode_worker_scheduler_summary.csv`\n"
         "7. `../processed/c8_decode_cluster_scheduler_summary.csv`\n"
-        "8. `../processed/c8_dynamo_sglang_concurrency_crosscheck.csv`\n"
-        "9. `../processed/c8_scheduler_source_semantics.csv`\n"
-        "10. `../figures/c8_prefill_worker_running_waiting.png`\n"
-        "11. `../figures/c8_decode_worker_running_waiting.png`\n"
-        "12. `../figures/c8_frontend_backend_concurrency_timeline.png`\n"
+        "8. `../processed/c8_decode_timeslice_field_semantics.csv`\n"
+        "9. `../processed/c8_decode_cluster_field_sensitivity.csv`\n"
+        "10. `../processed/c8_decode_timeslice_alignment_summary.csv`\n"
+        "11. `../processed/c8_dynamo_sglang_concurrency_crosscheck.csv`\n"
+        "12. `../processed/c8_scheduler_source_semantics.csv`\n"
+        "13. `../figures/c8_prefill_worker_running_waiting.png`\n"
+        "14. `../figures/c8_decode_worker_running_waiting.png`\n"
+        "15. `../figures/c8_frontend_backend_concurrency_timeline.png`\n"
     )
     _write(path, text)
 
@@ -1279,7 +1385,9 @@ def _c8_concurrency_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
         f"- **Observed scheduler counters:** prefill rank-series maximum running/waiting="
         f"{prefill_running}/{prefill_waiting}; decode rank-series maximum running/waiting="
         f"{decode_running}/{decode_waiting}. These are explicit AIPerf public server-metrics "
-        "export series, not summed worker or cluster totals.\n\n"
+        "export series, not summed worker or cluster totals. The later worker/cluster section below supersedes "
+        "this inventory for the separately validated decode DP-shard reconstruction; it does not turn rank-series "
+        "values into a P/D-global count.\n\n"
         + _table(
             _select(
                 summary,
@@ -1351,10 +1459,15 @@ def _c8_worker_cluster_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
     prefill = tables.get("c8_prefill_worker_scheduler_summary", pd.DataFrame())
     decode_worker = tables.get("c8_decode_worker_scheduler_summary", pd.DataFrame())
     decode_cluster = tables.get("c8_decode_cluster_scheduler_summary", pd.DataFrame())
+    decode_field_semantics = tables.get("c8_decode_timeslice_field_semantics", pd.DataFrame())
+    decode_field_sensitivity = tables.get("c8_decode_cluster_field_sensitivity", pd.DataFrame())
+    decode_alignment = tables.get("c8_decode_timeslice_alignment_summary", pd.DataFrame())
     decode_max, decode_max_status = _cluster_metric(tables, "decode_cluster_max_running")
     decode_p90, _ = _cluster_metric(tables, "decode_cluster_p90_running")
     prefill_a, _ = _cluster_metric(tables, "prefill_worker_0_rank_envelope_max_running")
     prefill_b, _ = _cluster_metric(tables, "prefill_worker_1_rank_envelope_max_running")
+    timeslice_field = _decode_selected_timeslice_field(tables)
+    decode_queues = _decode_cluster_queue_summary(decode_cluster)
     return (
         "\n\n## c8 Worker/Cluster Scheduler Reconstruction\n\n"
         "### Evidence\n\n"
@@ -1364,8 +1477,9 @@ def _c8_worker_cluster_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
         "not unique worker request counts.\n"
         "- **Decode DP verdict:** TP8/DP8 DP-attention exposes independent rank-local scheduler shards. Exact source "
         "semantics plus complete raw grids validate summing ranks within a decode worker.\n"
-        f"- **Decode cluster:** exact endpoint-interval intersection gives running max={decode_max}, P90={decode_p90} "
-        f"({decode_max_status}); generic `sglang:num_queue_reqs` is zero in every observed decode DP-rank sample.\n"
+        f"- **Decode cluster:** exact endpoint-interval intersection gives P90={decode_p90} and highest reconstructed "
+        f"1-s-bin sum={decode_max} ({decode_max_status}); this is not an instantaneous unique-request maximum. "
+        "Generic `sglang:num_queue_reqs` is zero in every observed decode DP-rank sample.\n"
         "- **Dynamo cross-check:** component inflight is correlated with but not equal to SGLang running; frontend/request-plane counters remain separate layers.\n\n"
         + _table(_select(primary, ["metric", "value", "status", "scope", "notes"]))
         + "\n\n"
@@ -1374,6 +1488,32 @@ def _c8_worker_cluster_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
         + _table(decode_worker)
         + "\n\n"
         + _table(decode_cluster)
+        + "\n\n## Decode occupancy sanity-check\n\n"
+        + f"- **Selected raw timeslice field:** `{timeslice_field}`. The raw-field audit, sensitivity variants, and "
+        "worker-timeslice alignment are versioned below; no missing field is fabricated or silently substituted.\n"
+        "- **Preferred label:** *highest reconstructed sum across overlapping exported one-second scheduler-occupancy bins*. "
+        "It is not an instantaneous HTTP concurrency or unique P/D request maximum.\n"
+        "- **Queue scope:** generic `num_queue_reqs=0` does not imply all decode/P-D queues were zero; preallocation "
+        "and transfer queues are retained separately. Report 14 and Report 15 apply this same scope label.\n\n"
+        "- **Validation:** the post-regeneration command results are recorded in "
+        "`studies/h200_gpu_resident_mtp/processed/validation_status.md`.\n\n"
+        + _table(
+            _select(
+                decode_field_semantics,
+                [
+                    "metric", "worker_id", "rank", "timeslice_count", "avg_present_fraction",
+                    "last_present_fraction", "max_present_fraction", "value_present_fraction",
+                    "avg_fractional_value_count", "avg_differs_from_max_count",
+                    "selected_field_under_current_parser",
+                ],
+            )
+        )
+        + "\n\n"
+        + _table(decode_field_sensitivity)
+        + "\n\n"
+        + _table(decode_alignment)
+        + "\n\n"
+        + _table(decode_queues)
         + "\n\n### Unknown\n\n"
         "- Prefill worker/cluster **unique** running and waiting remain Unknown: no CP-rank request-ID union is exported.\n"
         "- Prefill + decode cannot become unique system-global running: request-correlated P/D handoff and cross-stage deduplication are absent.\n"
@@ -1387,8 +1527,11 @@ def _c8_worker_cluster_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
         "6. `studies/h200_gpu_resident_mtp/processed/c8_decode_rank_scheduler_summary.csv`\n"
         "7. `studies/h200_gpu_resident_mtp/processed/c8_decode_worker_scheduler_summary.csv`\n"
         "8. `studies/h200_gpu_resident_mtp/processed/c8_decode_cluster_scheduler_summary.csv`\n"
-        "9. `studies/h200_gpu_resident_mtp/processed/c8_dynamo_sglang_concurrency_crosscheck.csv`\n"
-        "10. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_source_semantics.csv`\n"
+        "9. `studies/h200_gpu_resident_mtp/processed/c8_decode_timeslice_field_semantics.csv`\n"
+        "10. `studies/h200_gpu_resident_mtp/processed/c8_decode_cluster_field_sensitivity.csv`\n"
+        "11. `studies/h200_gpu_resident_mtp/processed/c8_decode_timeslice_alignment_summary.csv`\n"
+        "12. `studies/h200_gpu_resident_mtp/processed/c8_dynamo_sglang_concurrency_crosscheck.csv`\n"
+        "13. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_source_semantics.csv`\n"
     )
 
 
@@ -1698,9 +1841,13 @@ def _write_korean_summary(
     text += (
         "- Decode TP8/DP8 DP-attention의 DP rank는 source controller와 raw complete rank grid로 independent "
         "scheduler shard임을 검증했다. 따라서 같은 decode worker 내 DP rank 합계와, 실제 endpoint interval "
-        "overlap에서 계산한 decode cluster running은 해당 decode-stage scope에서만 합산 가능하다.\n"
+        "overlap에서 계산한 decode cluster occupancy는 해당 decode-stage scope에서만 합산 가능하다. 최고값은 "
+        "순간 unique request max가 아니라 exported 1초 scheduler-occupancy bin 합계다.\n"
         "- `sglang:num_queue_reqs`는 관측된 모든 decode DP rank sample에서 0이다. 이는 generic decode queue의 "
-        "범위이며 PD-specific prealloc/transfer queue 전체가 0이라는 뜻은 아니다.\n\n"
+        "범위이며 PD-specific prealloc/transfer queue 전체가 0이라는 뜻은 아니다. raw field semantics, field "
+        "sensitivity, worker timeslice alignment은 `processed/c8_decode_timeslice_field_semantics.csv`, "
+        "`processed/c8_decode_cluster_field_sensitivity.csv`, "
+        "`processed/c8_decode_timeslice_alignment_summary.csv`에 별도 보존했다.\n\n"
     )
     text += "## Strong inference\n\n"
     text += (

@@ -31,7 +31,6 @@ if str(REPOSITORY_ROOT / "scripts/h200_gpu_resident_mtp") not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT / "scripts/h200_gpu_resident_mtp"))
 
 from reconstruct_c8_concurrency import (  # noqa: E402
-    _first_numeric,
     _iter_metric_payloads,
     _profiling_window,
 )
@@ -40,9 +39,11 @@ from h200_agentx_analysis.scheduler_cluster_reconstruction import (  # noqa: E40
     aggregate_rank_shards,
     dynamo_sglang_crosscheck,
     intersect_worker_intervals,
+    occupancy_bin_scope_note,
     prefill_duplicate_verdict,
     rank_envelope_timeseries,
     rank_series_validation,
+    select_numeric_timeslice_field,
     summarize_worker_timeseries,
 )
 
@@ -52,6 +53,8 @@ RAW_ROOT_DEFAULT = REPOSITORY_ROOT / "data/raw/h200_gpu_resident_mtp"
 
 PREFILL_WORKERS = ("694d9fdfb4d8ee15", "694d9fdfb4d8ee13")
 DECODE_WORKERS = ("694d9fdfb4d8ee1b", "694d9fdfb4d8ee18")
+CURRENT_TIMESLICE_FIELD_PRIORITY = ("avg", "value", "last", "max")
+DECODE_OCCUPANCY_SENSITIVITY_FIELDS = ("avg", "last", "max")
 
 SGLANG_METRICS = (
     "sglang:num_running_reqs",
@@ -117,6 +120,10 @@ def main() -> int:
 
     prefill = sglang.loc[sglang["component"] == "prefill"].copy()
     decode = sglang.loc[sglang["component"] == "decode"].copy()
+    decode_running = _decode_running_timeslices(raw)
+    field_semantics = _decode_timeslice_field_semantics(decode_running)
+    field_semantics.to_csv(processed / "c8_decode_timeslice_field_semantics.csv", index=False)
+    current_timeslice_field = _selected_field_label(field_semantics)
     prefill_validation = rank_series_validation(
         prefill.loc[prefill["metric"].astype("string").isin(PREFILL_METRIC_COLUMNS)],
         rank_column="tp_rank",
@@ -207,9 +214,17 @@ def main() -> int:
         profile_duration_ns=phase_end_ns - phase_start_ns,
     )
     decode_cluster_summary = _decorate_decode_cluster_summary(
-        decode_cluster_summary, decode_waiting_all_zero
+        decode_cluster_summary,
+        decode_waiting_all_zero,
+        current_timeslice_field=current_timeslice_field,
     )
     decode_cluster_summary.to_csv(processed / "c8_decode_cluster_scheduler_summary.csv", index=False)
+    alignment_summary = _decode_timeslice_alignment_summary(decode_cluster)
+    alignment_summary.to_csv(processed / "c8_decode_timeslice_alignment_summary.csv", index=False)
+    field_sensitivity = _decode_cluster_field_sensitivity(
+        decode_running, profile_duration_ns=phase_end_ns - phase_start_ns
+    )
+    field_sensitivity.to_csv(processed / "c8_decode_cluster_field_sensitivity.csv", index=False)
     _reviewable_decode_timeseries(decode_workers, decode_cluster, phase_start_ns).to_csv(
         processed / "c8_decode_worker_scheduler_timeseries.csv", index=False
     )
@@ -233,6 +248,7 @@ def main() -> int:
         decode_cluster_summary=decode_cluster_summary,
         prefill_verdict=prefill_verdict,
         decode_waiting_all_zero=decode_waiting_all_zero,
+        current_timeslice_field=current_timeslice_field,
     )
     cluster_summary.to_csv(processed / "c8_cluster_scheduler_reconstruction.csv", index=False)
     _build_figures(
@@ -282,9 +298,9 @@ def _extract_selected_timeseries(
                 end = _integer_or_none(timeslice.get("end_ns"))
                 if start is None or end is None or end <= profile_start_ns or start >= profile_end_ns:
                     continue
-                value = _first_numeric(timeslice, ("avg", "value", "last", "max"))
-                if value is None:
-                    continue
+                value, selected_field = select_numeric_timeslice_field(
+                    timeslice, CURRENT_TIMESLICE_FIELD_PRIORITY
+                )
                 rows.append(
                     {
                         "metric": metric,
@@ -302,6 +318,13 @@ def _extract_selected_timeseries(
                         "timeslice_start_ns": max(start, profile_start_ns),
                         "timeslice_end_ns": min(end, profile_end_ns),
                         "timeslice_value": value,
+                        "timeslice_selected_field": selected_field,
+                        "timeslice_avg": _raw_numeric_field(timeslice, "avg"),
+                        "timeslice_last": _raw_numeric_field(timeslice, "last"),
+                        "timeslice_max": _raw_numeric_field(timeslice, "max"),
+                        "timeslice_min": _raw_numeric_field(timeslice, "min"),
+                        "timeslice_explicit_value": _raw_numeric_field(timeslice, "value"),
+                        "timeslice_field_keys": json.dumps(sorted(timeslice.keys())),
                     }
                 )
     result = pd.DataFrame(rows)
@@ -333,6 +356,232 @@ def _integer_or_none(value: object) -> int | None:
     except (TypeError, ValueError):
         return None
     return numeric
+
+
+def _raw_numeric_field(mapping: dict[str, Any], field: str) -> float | None:
+    """Read one raw field without falling back to a different statistic."""
+
+    value, selected = select_numeric_timeslice_field(mapping, (field,))
+    return value if selected is not None else None
+
+
+def _decode_running_timeslices(raw: pd.DataFrame) -> pd.DataFrame:
+    """Select the raw decode running-gauge rows used for occupancy analysis."""
+
+    return raw.loc[
+        (raw["component"].astype("string") == "decode")
+        & (raw["metric"].astype("string") == "sglang:num_running_reqs")
+        & raw["worker_id"].astype("string").isin(DECODE_WORKERS)
+    ].copy()
+
+
+def _decode_timeslice_field_semantics(decode_running: pd.DataFrame) -> pd.DataFrame:
+    """Inventory raw gauge fields by worker and DP rank without inventing fields."""
+
+    rows: list[dict[str, object]] = []
+    field_columns = {
+        "avg": "timeslice_avg",
+        "last": "timeslice_last",
+        "max": "timeslice_max",
+        "value": "timeslice_explicit_value",
+        "min": "timeslice_min",
+    }
+    for (worker_id, dp_rank), group in decode_running.groupby(
+        ["worker_id", "dp_rank"], dropna=False, sort=True
+    ):
+        count = int(len(group))
+        selected = group["timeslice_selected_field"].dropna().astype(str)
+        selected_counts = selected.value_counts().sort_index().to_dict()
+        selected_label = (
+            next(iter(selected_counts))
+            if len(selected_counts) == 1
+            else "mixed:" + ",".join(f"{key}={value}" for key, value in selected_counts.items())
+        )
+        schema_keys: set[str] = set()
+        for value in group["timeslice_field_keys"].dropna():
+            try:
+                schema_keys.update(json.loads(str(value)))
+            except json.JSONDecodeError:
+                continue
+        row: dict[str, object] = {
+            "metric": "sglang:num_running_reqs",
+            "worker_id": worker_id,
+            "rank": dp_rank,
+            "timeslice_count": count,
+            "selected_field_under_current_parser": selected_label or "Unknown",
+            "selected_field_counts": json.dumps(selected_counts, sort_keys=True),
+            "raw_timeslice_schema_keys": json.dumps(sorted(schema_keys)),
+            "timeslice_start_ns_min": _integer_min_or_none(group["timeslice_start_ns"]),
+            "timeslice_end_ns_max": _integer_max_or_none(group["timeslice_end_ns"]),
+            "classification": "Evidence",
+            "notes": (
+                "Presence is measured from raw public JSON timeslices. Current parser priority is "
+                "avg, value, last, max; a missing statistic is not substituted in this inventory."
+            ),
+        }
+        for field, column in field_columns.items():
+            values = pd.to_numeric(group.get(column), errors="coerce")
+            row[f"{field}_present_fraction"] = _fraction_true(values.notna())
+        avg_values = pd.to_numeric(group["timeslice_avg"], errors="coerce")
+        paired_avg_max = pd.DataFrame(
+            {
+                "avg": avg_values,
+                "max": pd.to_numeric(group["timeslice_max"], errors="coerce"),
+            }
+        ).dropna()
+        row["avg_fractional_value_count"] = int(
+            (avg_values.notna() & ~np.isclose(avg_values.fillna(0.0), np.round(avg_values.fillna(0.0)))).sum()
+        )
+        row["avg_differs_from_max_count"] = int(
+            (~np.isclose(paired_avg_max["avg"], paired_avg_max["max"])).sum()
+        )
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def _selected_field_label(field_semantics: pd.DataFrame) -> str:
+    if field_semantics.empty or "selected_field_under_current_parser" not in field_semantics:
+        return "Unknown"
+    labels = field_semantics["selected_field_under_current_parser"].dropna().astype(str).unique().tolist()
+    if not labels:
+        return "Unknown"
+    return labels[0] if len(labels) == 1 else "mixed"
+
+
+def _decode_cluster_field_sensitivity(
+    decode_running: pd.DataFrame,
+    *,
+    profile_duration_ns: int,
+) -> pd.DataFrame:
+    """Reconstruct named raw-field variants without filling unavailable samples."""
+
+    field_columns = {
+        "avg": "timeslice_avg",
+        "last": "timeslice_last",
+        "max": "timeslice_max",
+    }
+    rows: list[dict[str, object]] = []
+    for field in DECODE_OCCUPANCY_SENSITIVITY_FIELDS:
+        column = field_columns[field]
+        variant = decode_running.copy()
+        variant["timeslice_value"] = pd.to_numeric(variant.get(column), errors="coerce")
+        raw_count = int(len(variant))
+        present_fraction = _fraction_true(variant["timeslice_value"].notna())
+        if not variant["timeslice_value"].notna().any():
+            rows.append(
+                {
+                    "timeslice_field": field,
+                    "availability_status": "Unavailable",
+                    "raw_rank_timeslice_count": raw_count,
+                    "raw_field_present_fraction": present_fraction,
+                    "mean": "Unknown",
+                    "p50": "Unknown",
+                    "p90": "Unknown",
+                    "p95": "Unknown",
+                    "p99": "Unknown",
+                    "highest_reconstructed_1s_bin_sum": "Unknown",
+                    "notes": "The raw field was absent; no fallback value was invented.",
+                }
+            )
+            continue
+        workers = aggregate_rank_shards(
+            variant,
+            rank_column="dp_rank",
+            metric_to_column={"sglang:num_running_reqs": "running_requests"},
+            expected_rank_count=8,
+            accepted_workers=DECODE_WORKERS,
+        )
+        cluster, summary = intersect_worker_intervals(
+            workers,
+            component="decode",
+            worker_ids=DECODE_WORKERS,
+            value_columns=("running_requests",),
+            profile_duration_ns=profile_duration_ns,
+        )
+        metric = _lookup_cluster(summary, "running_requests")
+        rows.append(
+            {
+                "timeslice_field": field,
+                "availability_status": "Evidence" if metric else "Unavailable",
+                "raw_rank_timeslice_count": raw_count,
+                "raw_field_present_fraction": present_fraction,
+                "cluster_overlap_segment_count": metric.get("overlap_segment_count", "Unknown"),
+                "cluster_overlap_s": metric.get("common_worker_overlap_s", "Unknown"),
+                "mean": metric.get("time_weighted_mean", "Unknown"),
+                "p50": metric.get("p50", "Unknown"),
+                "p90": metric.get("p90", "Unknown"),
+                "p95": metric.get("p95", "Unknown"),
+                "p99": metric.get("p99", "Unknown"),
+                "highest_reconstructed_1s_bin_sum": metric.get("max", "Unknown"),
+                "notes": (
+                    "Exact endpoint-interval intersection after validated DP-shard sums. Values are "
+                    "exported one-second occupancy-bin statistics, not instantaneous unique requests."
+                ),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _decode_timeslice_alignment_summary(cluster: pd.DataFrame) -> pd.DataFrame:
+    """Describe real endpoint-bin intersections and their start offsets."""
+
+    if cluster.empty:
+        return pd.DataFrame(
+            [
+                {
+                    "availability_status": "Unavailable",
+                    "notes": "No common decode endpoint intervals were reconstructed.",
+                }
+            ]
+        )
+    durations = pd.to_numeric(cluster["overlap_duration_ns"], errors="coerce").dropna()
+    offsets = (
+        pd.to_numeric(cluster["worker_b_sample_start_ns"], errors="coerce")
+        - pd.to_numeric(cluster["worker_a_sample_start_ns"], errors="coerce")
+    ).dropna()
+    absolute_offsets = offsets.abs()
+    return pd.DataFrame(
+        [
+            {
+                "worker_a": cluster.iloc[0].get("worker_a", "Unknown"),
+                "worker_b": cluster.iloc[0].get("worker_b", "Unknown"),
+                "intersection_segment_count": int(len(cluster)),
+                "intersection_duration_min_ns": _min_or_none(durations),
+                "intersection_duration_p50_ns": _quantile(durations, 0.50),
+                "intersection_duration_p90_ns": _quantile(durations, 0.90),
+                "intersection_duration_p95_ns": _quantile(durations, 0.95),
+                "intersection_duration_max_ns": _max_or_none(durations),
+                "worker_b_minus_a_start_offset_p50_ns": _quantile(offsets, 0.50),
+                "worker_b_minus_a_start_offset_p90_ns": _quantile(offsets, 0.90),
+                "worker_b_minus_a_start_offset_p95_ns": _quantile(offsets, 0.95),
+                "absolute_start_offset_p50_ns": _quantile(absolute_offsets, 0.50),
+                "absolute_start_offset_p90_ns": _quantile(absolute_offsets, 0.90),
+                "absolute_start_offset_p95_ns": _quantile(absolute_offsets, 0.95),
+                "availability_status": "Evidence",
+                "method": "actual [start_ns,end_ns) endpoint-interval intersection; no nearest-neighbor, fill, or interpolation",
+                "notes": "Offsets compare the two exported backend timeslice grids, not request timestamps.",
+            }
+        ]
+    )
+
+
+def _fraction_true(values: pd.Series) -> float | None:
+    return float(values.mean()) if len(values) else None
+
+
+def _min_or_none(values: pd.Series) -> float | None:
+    numeric = pd.to_numeric(values, errors="coerce").dropna()
+    return float(numeric.min()) if not numeric.empty else None
+
+
+def _integer_min_or_none(values: pd.Series) -> int | None:
+    numeric = pd.to_numeric(values, errors="coerce").dropna()
+    return int(numeric.min()) if not numeric.empty else None
+
+
+def _integer_max_or_none(values: pd.Series) -> int | None:
+    numeric = pd.to_numeric(values, errors="coerce").dropna()
+    return int(numeric.max()) if not numeric.empty else None
 
 
 def _source_semantics_rows() -> pd.DataFrame:
@@ -493,13 +742,25 @@ def _decorate_decode_summary(summary: pd.DataFrame, decode_waiting_all_zero: boo
 
 
 def _decorate_decode_cluster_summary(
-    summary: pd.DataFrame, decode_waiting_all_zero: bool
+    summary: pd.DataFrame,
+    decode_waiting_all_zero: bool,
+    *,
+    current_timeslice_field: str,
 ) -> pd.DataFrame:
     result = summary.copy()
     result["decode_waiting_all_zero_raw_rank_series"] = np.where(
         result["metric"].astype("string") == "waiting_requests", decode_waiting_all_zero, pd.NA
     )
-    result["notes"] = result["reconstruction_method"].astype("string") + "; DP rank sums are valid only because source topology and complete grids are both verified."
+    result["timeslice_selected_field"] = current_timeslice_field
+    common_note = (
+        result["reconstruction_method"].astype("string")
+        + "; DP rank sums are valid only because source topology and complete grids are both verified."
+    )
+    result["notes"] = common_note + " Selected raw field: " + current_timeslice_field + "."
+    running = result["metric"].astype("string") == "running_requests"
+    result.loc[running, "notes"] = common_note.loc[running] + " " + occupancy_bin_scope_note(
+        current_timeslice_field
+    )
     return result
 
 
@@ -640,6 +901,7 @@ def _primary_cluster_summary(
     decode_cluster_summary: pd.DataFrame,
     prefill_verdict: pd.DataFrame,
     decode_waiting_all_zero: bool,
+    current_timeslice_field: str,
 ) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
 
@@ -757,29 +1019,47 @@ def _primary_cluster_summary(
                 "A logical request is assigned to one DP shard under the validated source mapping.",
             )
 
+    decode_bin_scope = (
+        "two decode workers, exact intersections of exported one-second scheduler occupancy bins"
+    )
     for kind in ("running", "waiting"):
         summary = _lookup_cluster(decode_cluster_summary, f"{kind}_requests")
         for field, suffix in (("max", "max"), ("p50", "p50"), ("p90", "p90"), ("p95", "p95")):
+            if kind == "running" and suffix == "max":
+                notes = (
+                    "Highest reconstructed sum across exported one-second scheduler occupancy bins. "
+                    "Not an instantaneous unique-request maximum."
+                )
+            elif kind == "running":
+                notes = (
+                    "Time-weighted distribution of reconstructed exported one-second scheduler "
+                    "occupancy-bin sums; not instantaneous unique-request counts."
+                )
+            else:
+                notes = (
+                    "Generic SGLang decode waiting queue only; this does not assert that all "
+                    "P/D-specific decode queues were zero."
+                )
             add(
                 f"decode_cluster_{suffix}_{kind}",
                 summary.get(field, "Unknown") if summary else "Unknown",
                 "requests",
-                "two decode workers, sum only over exact overlapping raw endpoint intervals",
+                decode_bin_scope,
                 summary.get("status", "Unknown") if summary else "Unknown",
                 summary.get("reconstruction_method", "Unknown") if summary else "Unknown",
                 "raw decode DP grids, validated worker sums, exact endpoint-interval intersection",
-                "This is decode-stage cluster occupancy, not P/D unique system-global running.",
+                notes,
             )
     queue_cluster = _lookup_cluster(decode_cluster_summary, "waiting_requests")
     add(
         "decode_cluster_waiting_positive_fraction",
         queue_cluster.get("positive_fraction", "Unknown") if queue_cluster else "Unknown",
         "fraction",
-        "two decode workers, sum only over exact overlapping raw endpoint intervals",
+        decode_bin_scope,
         queue_cluster.get("status", "Unknown") if queue_cluster else "Unknown",
         queue_cluster.get("reconstruction_method", "Unknown") if queue_cluster else "Unknown",
         "raw decode queue rank series",
-        "Entire observed decode raw rank-series window has queue=0; this is not a claim about Dynamo/frontend queues.",
+        "Entire observed decode raw rank-series window has generic queue=0; this is not a claim that all P/D-specific decode queues, Dynamo queues, or frontend queues are zero.",
     )
     add(
         "decode_waiting_all_zero",
@@ -789,7 +1069,51 @@ def _primary_cluster_summary(
         "Evidence",
         "raw rank-timeslice check",
         "server_metrics_export.json 1-second AIPerf bins",
-        "The metric's zero scope is SGLang decode queue gauge only.",
+        "The metric's zero scope is generic SGLang decode num_queue_reqs only; separate P/D preallocation and transfer queue metrics are retained below.",
+    )
+    for metric, prefix, label in (
+        (
+            "decode_prealloc_queue_requests",
+            "decode_cluster_prealloc_queue",
+            "P/D-specific decode preallocation queue",
+        ),
+        (
+            "decode_transfer_queue_requests",
+            "decode_cluster_transfer_queue",
+            "P/D-specific decode transfer queue",
+        ),
+    ):
+        summary = _lookup_cluster(decode_cluster_summary, metric)
+        for field, suffix in (("max", "max"), ("p90", "p90")):
+            add(
+                f"{prefix}_{suffix}",
+                summary.get(field, "Unknown") if summary else "Unknown",
+                "requests",
+                decode_bin_scope,
+                summary.get("status", "Unknown") if summary else "Unknown",
+                summary.get("reconstruction_method", "Unknown") if summary else "Unknown",
+                "raw decode DP grids, validated worker sums, exact endpoint-interval intersection",
+                f"{label}; it is deliberately not merged with generic num_queue_reqs or another P/D queue.",
+            )
+        add(
+            f"{prefix}_positive_fraction",
+            summary.get("positive_fraction", "Unknown") if summary else "Unknown",
+            "fraction",
+            decode_bin_scope,
+            summary.get("status", "Unknown") if summary else "Unknown",
+            summary.get("reconstruction_method", "Unknown") if summary else "Unknown",
+            "raw decode DP grids, validated worker sums, exact endpoint-interval intersection",
+            f"Fraction of common endpoint-interval duration with {label.lower()} > 0; not a unique request queue fraction.",
+        )
+    add(
+        "decode_occupancy_timeslice_selected_field",
+        current_timeslice_field,
+        "raw timeslice field",
+        "decode running-request reconstruction input",
+        "Evidence",
+        "raw timeslice field inventory",
+        "c8_decode_timeslice_field_semantics.csv",
+        occupancy_bin_scope_note(current_timeslice_field),
     )
     add(
         "backend_stage_active_max",
@@ -921,7 +1245,11 @@ def _plot_decode_cluster(path: Path, frame: pd.DataFrame) -> None:
     starts = pd.to_numeric(frame.get("overlap_start_ns"), errors="coerce")
     x = (starts - starts.min()) / 1e9 if starts.notna().any() else starts
     for axis, column, title in (
-        (axes[0], "running_requests_cluster", "Decode cluster running (validated DP-shard sum)"),
+        (
+            axes[0],
+            "running_requests_cluster",
+            "Decode reconstructed occupancy (exported 1-s-bin DP-shard sum)",
+        ),
         (axes[1], "waiting_requests_cluster", "Decode cluster waiting (validated DP-shard sum)"),
     ):
         axis.plot(x, pd.to_numeric(frame.get(column), errors="coerce"), linewidth=0.8)
@@ -929,7 +1257,9 @@ def _plot_decode_cluster(path: Path, frame: pd.DataFrame) -> None:
         axis.set_ylabel("requests")
         axis.grid(alpha=0.25)
     axes[1].set_xlabel("seconds from first common endpoint sample")
-    figure.suptitle("Public H200 c8: two decode workers aligned without fill/interpolation", y=1.01)
+    figure.suptitle(
+        "Public H200 c8: exported occupancy bins aligned without fill/interpolation", y=1.01
+    )
     figure.tight_layout()
     figure.savefig(path, dpi=170, bbox_inches="tight")
     plt.close(figure)
@@ -955,7 +1285,7 @@ def _plot_frontend_backend_layers(
             (starts - starts.min()) / 1e9,
             pd.to_numeric(decode_cluster["running_requests_cluster"], errors="coerce"),
             linewidth=0.8,
-            label="SGLang decode cluster running",
+            label="SGLang decode reconstructed occupancy (1-s-bin sum)",
         )
     axis.set_title("Public H200 c8 concurrency layers (different scopes; not equivalent)")
     axis.set_xlabel("seconds from profiling start / phase-second bin")

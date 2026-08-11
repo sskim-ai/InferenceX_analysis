@@ -210,7 +210,7 @@
 - **HTTP/client interval overlap:** max=11; time-weighted mean=3.968259088179123; P90=7.0; P95=8.0. These are `[request_start_ns, request_end_ns)` profile intervals with end-before-start tie handling, never relabelled as GPU or scheduler running concurrency.
 - **Root/subagent overlap:** maximum root=7; maximum subagent=7. Branch origin is not backend worker or GPU affinity.
 - **ID03 c8 load relation:** unadjusted Spearman HTTP-overlap-at-start vs TTFT: ρ=0.0239237, p=0.796207, n=119.
-- **Observed scheduler counters:** prefill rank-series maximum running/waiting=5.0/5.0; decode rank-series maximum running/waiting=2.0/0.0. These are explicit AIPerf public server-metrics export series, not summed worker or cluster totals.
+- **Observed scheduler counters:** prefill rank-series maximum running/waiting=5.0/5.0; decode rank-series maximum running/waiting=2.0/0.0. These are explicit AIPerf public server-metrics export series, not summed worker or cluster totals. The later worker/cluster section below supersedes this inventory for the separately validated decode DP-shard reconstruction; it does not turn rank-series values into a P/D-global count.
 
 | metric | value | status | evidence_scope | notes |
 | --- | --- | --- | --- | --- |
@@ -331,7 +331,7 @@
 - **Prefill TP verdict:** TP8/ATTN_CP8 metrics are CP-rank local scheduler views. Raw series are highly synchronized but not perfectly identical; neither TP8 multiplication nor a unique-worker gauge is proven.
 - **Prefill rank envelopes:** running maxima are 5.0 and 4.0; these are pressure evidence, not unique worker request counts.
 - **Decode DP verdict:** TP8/DP8 DP-attention exposes independent rank-local scheduler shards. Exact source semantics plus complete raw grids validate summing ranks within a decode worker.
-- **Decode cluster:** exact endpoint-interval intersection gives running max=17.0, P90=10.0 (Validated reconstruction); generic `sglang:num_queue_reqs` is zero in every observed decode DP-rank sample.
+- **Decode cluster:** exact endpoint-interval intersection gives P90=10.0 and highest reconstructed 1-s-bin sum=17.0 (Validated reconstruction); this is not an instantaneous unique-request maximum. Generic `sglang:num_queue_reqs` is zero in every observed decode DP-rank sample.
 - **Dynamo cross-check:** component inflight is correlated with but not equal to SGLang running; frontend/request-plane counters remain separate layers.
 
 | metric | value | status | scope | notes |
@@ -361,11 +361,11 @@
 | decode_worker_0_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
 | decode_worker_1_max_running | 10.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
 | decode_worker_1_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
-| decode_cluster_max_running | 17.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
-| decode_cluster_p50_running | 4.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
-| decode_cluster_p90_running | 10.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
-| decode_cluster_p95_running | 12.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
-| decode_cluster_max_waiting | 0.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_max_running | 17.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Highest reconstructed sum across exported one-second scheduler occupancy bins. Not an instantaneous unique-request maximum. |
+| decode_cluster_p50_running | 4.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_p90_running | 10.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_p95_running | 12.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_max_waiting | 0.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Generic SGLang decode waiting queue only; this does not assert that all P/D-specific decode queues were zero. |
 
 - Table is truncated to 30 rows.
 
@@ -391,12 +391,55 @@
 | decode | 694d9fdfb4d8ee1b | decode_prealloc_queue_requests | 3624 | 4 | 0 | 1 | 1 | 0.143488 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
 | decode | 694d9fdfb4d8ee1b | decode_transfer_queue_requests | 3624 | 3 | 0 | 0 | 1 | 0.0706402 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
 
-| component | metric | worker_a | worker_b | overlap_segment_count | common_worker_overlap_s | common_worker_overlap_fraction_of_profile | max | time_weighted_mean | p50 | p75 | p90 | p95 | p99 | positive_fraction | status | reconstruction_method | decode_waiting_all_zero_raw_rank_series | notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| decode | running_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 17 | 5.14057 | 4 | 8 | 10 | 12 | 15 | 0.917739 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. |
-| decode | waiting_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections | True | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. |
-| decode | decode_prealloc_queue_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 5 | 0.541441 | 0 | 1 | 2 | 3 | 4 | 0.325967 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. |
-| decode | decode_transfer_queue_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 4 | 0.143479 | 0 | 0 | 1 | 1 | 2 | 0.123454 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. |
+| component | metric | worker_a | worker_b | overlap_segment_count | common_worker_overlap_s | common_worker_overlap_fraction_of_profile | max | time_weighted_mean | p50 | p75 | p90 | p95 | p99 | positive_fraction | status | reconstruction_method | decode_waiting_all_zero_raw_rank_series | timeslice_selected_field | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| decode | running_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 17 | 5.14057 | 4 | 8 | 10 | 12 | 15 | 0.917739 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | avg | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. selected raw avg field from exported one-second scheduler occupancy bins; not an instantaneous unique-request maximum. |
+| decode | waiting_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections | True | avg | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+| decode | decode_prealloc_queue_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 5 | 0.541441 | 0 | 1 | 2 | 3 | 4 | 0.325967 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | avg | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+| decode | decode_transfer_queue_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 4 | 0.143479 | 0 | 0 | 1 | 1 | 2 | 0.123454 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | avg | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+
+## Decode occupancy sanity-check
+
+- **Selected raw timeslice field:** `avg`. The raw-field audit, sensitivity variants, and worker-timeslice alignment are versioned below; no missing field is fabricated or silently substituted.
+- **Preferred label:** *highest reconstructed sum across overlapping exported one-second scheduler-occupancy bins*. It is not an instantaneous HTTP concurrency or unique P/D request maximum.
+- **Queue scope:** generic `num_queue_reqs=0` does not imply all decode/P-D queues were zero; preallocation and transfer queues are retained separately. Report 14 and Report 15 apply this same scope label.
+
+- **Validation:** the post-regeneration command results are recorded in `studies/h200_gpu_resident_mtp/processed/validation_status.md`.
+
+| metric | worker_id | rank | timeslice_count | avg_present_fraction | last_present_fraction | max_present_fraction | value_present_fraction | avg_fractional_value_count | avg_differs_from_max_count | selected_field_under_current_parser |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 0 | 3607 | 1 | 0 | 1 | 0 | 15 | 15 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 1 | 3607 | 1 | 0 | 1 | 0 | 26 | 26 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 2 | 3607 | 1 | 0 | 1 | 0 | 18 | 18 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 3 | 3607 | 1 | 0 | 1 | 0 | 26 | 26 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 4 | 3607 | 1 | 0 | 1 | 0 | 17 | 17 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 5 | 3607 | 1 | 0 | 1 | 0 | 24 | 26 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 6 | 3607 | 1 | 0 | 1 | 0 | 14 | 14 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 7 | 3607 | 1 | 0 | 1 | 0 | 28 | 31 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 0 | 3624 | 1 | 0 | 1 | 0 | 23 | 24 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 1 | 3624 | 1 | 0 | 1 | 0 | 18 | 18 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 2 | 3624 | 1 | 0 | 1 | 0 | 24 | 24 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 3 | 3624 | 1 | 0 | 1 | 0 | 22 | 22 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 4 | 3624 | 1 | 0 | 1 | 0 | 25 | 25 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 5 | 3624 | 1 | 0 | 1 | 0 | 23 | 23 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 6 | 3624 | 1 | 0 | 1 | 0 | 29 | 29 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 7 | 3624 | 1 | 0 | 1 | 0 | 18 | 18 | avg |
+
+| timeslice_field | availability_status | raw_rank_timeslice_count | raw_field_present_fraction | cluster_overlap_segment_count | cluster_overlap_s | mean | p50 | p90 | p95 | p99 | highest_reconstructed_1s_bin_sum | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| avg | Evidence | 57848 | 1 | 7185 | 3592.85 | 5.140572157500383 | 4.0 | 10.0 | 12.0 | 15.0 | 17.0 | Exact endpoint-interval intersection after validated DP-shard sums. Values are exported one-second occupancy-bin statistics, not instantaneous unique requests. |
+| last | Unavailable | 57848 | 0 |  |  | Unknown | Unknown | Unknown | Unknown | Unknown | Unknown | The raw field was absent; no fallback value was invented. |
+| max | Evidence | 57848 | 1 | 7185 | 3592.85 | 5.1908523229398815 | 4.0 | 11.0 | 12.0 | 15.0 | 17.0 | Exact endpoint-interval intersection after validated DP-shard sums. Values are exported one-second occupancy-bin statistics, not instantaneous unique requests. |
+
+| worker_a | worker_b | intersection_segment_count | intersection_duration_min_ns | intersection_duration_p50_ns | intersection_duration_p90_ns | intersection_duration_p95_ns | intersection_duration_max_ns | worker_b_minus_a_start_offset_p50_ns | worker_b_minus_a_start_offset_p90_ns | worker_b_minus_a_start_offset_p95_ns | absolute_start_offset_p50_ns | absolute_start_offset_p90_ns | absolute_start_offset_p95_ns | availability_status | method | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 1.49116e+08 | 8.50466e+08 | 8.50884e+08 | 8.50884e+08 | 8.50884e+08 | -1.49116e+08 | 8.50884e+08 | 8.50884e+08 | 1.49116e+08 | 8.50884e+08 | 8.50884e+08 | Evidence | actual [start_ns,end_ns) endpoint-interval intersection; no nearest-neighbor, fill, or interpolation | Offsets compare the two exported backend timeslice grids, not request timestamps. |
+
+| queue_metric | max | p90 | positive_fraction | status | notes |
+| --- | --- | --- | --- | --- | --- |
+| Generic SGLang `num_queue_reqs` | 0 | 0 | 0 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+| Decode preallocation queue | 5 | 2 | 0.325967 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+| Decode transfer queue | 4 | 1 | 0.123454 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
 
 ### Unknown
 
@@ -414,8 +457,11 @@
 6. `studies/h200_gpu_resident_mtp/processed/c8_decode_rank_scheduler_summary.csv`
 7. `studies/h200_gpu_resident_mtp/processed/c8_decode_worker_scheduler_summary.csv`
 8. `studies/h200_gpu_resident_mtp/processed/c8_decode_cluster_scheduler_summary.csv`
-9. `studies/h200_gpu_resident_mtp/processed/c8_dynamo_sglang_concurrency_crosscheck.csv`
-10. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_source_semantics.csv`
+9. `studies/h200_gpu_resident_mtp/processed/c8_decode_timeslice_field_semantics.csv`
+10. `studies/h200_gpu_resident_mtp/processed/c8_decode_cluster_field_sensitivity.csv`
+11. `studies/h200_gpu_resident_mtp/processed/c8_decode_timeslice_alignment_summary.csv`
+12. `studies/h200_gpu_resident_mtp/processed/c8_dynamo_sglang_concurrency_crosscheck.csv`
+13. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_source_semantics.csv`
 
 
 - **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` only as a raw profile counter; `raw_profile_cache_counter_tps` is not a validated logical-prompt or physical-KV metric.

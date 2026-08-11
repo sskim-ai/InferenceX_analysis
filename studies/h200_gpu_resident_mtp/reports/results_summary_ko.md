@@ -178,18 +178,18 @@
 | decode_worker_0_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
 | decode_worker_1_max_running | 10.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
 | decode_worker_1_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
-| decode_cluster_max_running | 17.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
-| decode_cluster_p50_running | 4.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
-| decode_cluster_p90_running | 10.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
-| decode_cluster_p95_running | 12.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
-| decode_cluster_max_waiting | 0.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_max_running | 17.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Highest reconstructed sum across exported one-second scheduler occupancy bins. Not an instantaneous unique-request maximum. |
+| decode_cluster_p50_running | 4.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_p90_running | 10.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_p95_running | 12.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_max_waiting | 0.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Generic SGLang decode waiting queue only; this does not assert that all P/D-specific decode queues were zero. |
 
 - Table is truncated to 30 rows.
 
 ## Validated reconstruction
 
-- Decode TP8/DP8 DP-attention의 DP rank는 source controller와 raw complete rank grid로 independent scheduler shard임을 검증했다. 따라서 같은 decode worker 내 DP rank 합계와, 실제 endpoint interval overlap에서 계산한 decode cluster running은 해당 decode-stage scope에서만 합산 가능하다.
-- `sglang:num_queue_reqs`는 관측된 모든 decode DP rank sample에서 0이다. 이는 generic decode queue의 범위이며 PD-specific prealloc/transfer queue 전체가 0이라는 뜻은 아니다.
+- Decode TP8/DP8 DP-attention의 DP rank는 source controller와 raw complete rank grid로 independent scheduler shard임을 검증했다. 따라서 같은 decode worker 내 DP rank 합계와, 실제 endpoint interval overlap에서 계산한 decode cluster occupancy는 해당 decode-stage scope에서만 합산 가능하다. 최고값은 순간 unique request max가 아니라 exported 1초 scheduler-occupancy bin 합계다.
+- `sglang:num_queue_reqs`는 관측된 모든 decode DP rank sample에서 0이다. 이는 generic decode queue의 범위이며 PD-specific prealloc/transfer queue 전체가 0이라는 뜻은 아니다. raw field semantics, field sensitivity, worker timeslice alignment은 `processed/c8_decode_timeslice_field_semantics.csv`, `processed/c8_decode_cluster_field_sensitivity.csv`, `processed/c8_decode_timeslice_alignment_summary.csv`에 별도 보존했다.
 
 ## Strong inference
 

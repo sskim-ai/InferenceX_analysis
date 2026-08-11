@@ -23,6 +23,47 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 
+def select_numeric_timeslice_field(
+    mapping: Mapping[str, object],
+    fields: Sequence[str],
+) -> tuple[float | None, str | None]:
+    """Return the first finite numeric raw timeslice field and its name.
+
+    Exported AIPerf timeslices can expose multiple summaries such as ``avg``,
+    ``last``, and ``max``.  Callers must retain the selected field alongside
+    its value so a scheduler-occupancy bin is not silently relabelled as an
+    instantaneous scrape.  Missing fields remain ``None`` rather than zero.
+    """
+
+    for field in fields:
+        value = _finite_float(mapping.get(field))
+        if value is not None:
+            return value, field
+    return None, None
+
+
+def occupancy_bin_scope_note(selected_field: str | None) -> str:
+    """Describe an exported scheduler-bin statistic without inventing scope.
+
+    The helper deliberately does not call a bin statistic an instantaneous
+    request count.  It is reused in derived CSVs and tests so the high-water
+    mark of an occupancy reconstruction cannot silently become a unique
+    request-concurrency claim.
+    """
+
+    if selected_field == "avg":
+        statistic = "selected raw avg field from exported one-second scheduler occupancy bins"
+    elif selected_field == "last":
+        statistic = "selected raw last field from exported scheduler occupancy bins"
+    elif selected_field == "max":
+        statistic = "selected raw max field from exported scheduler occupancy bins"
+    elif selected_field == "value":
+        statistic = "selected raw value field from exported scheduler occupancy bins"
+    else:
+        statistic = "exported scheduler occupancy-bin field with unresolved selected statistic"
+    return f"{statistic}; not an instantaneous unique-request maximum."
+
+
 def rank_series_validation(
     timeline: pd.DataFrame,
     *,

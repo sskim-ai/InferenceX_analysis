@@ -1,0 +1,4 @@
+timeslice_field,availability_status,raw_rank_timeslice_count,raw_field_present_fraction,cluster_overlap_segment_count,cluster_overlap_s,mean,p50,p90,p95,p99,highest_reconstructed_1s_bin_sum,notes
+avg,Evidence,57848,1.0,7185.0,3592.850466321,5.140572157500383,4.0,10.0,12.0,15.0,17.0,"Exact endpoint-interval intersection after validated DP-shard sums. Values are exported one-second occupancy-bin statistics, not instantaneous unique requests."
+last,Unavailable,57848,0.0,,,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,The raw field was absent; no fallback value was invented.
+max,Evidence,57848,1.0,7185.0,3592.850466321,5.1908523229398815,4.0,11.0,12.0,15.0,17.0,"Exact endpoint-interval intersection after validated DP-shard sums. Values are exported one-second occupancy-bin statistics, not instantaneous unique requests."

@@ -8,9 +8,11 @@ from h200_agentx_analysis.scheduler_cluster_reconstruction import (
     dynamo_sglang_crosscheck,
     guarded_stage_sum,
     intersect_worker_intervals,
+    occupancy_bin_scope_note,
     prefill_duplicate_verdict,
     rank_envelope_timeseries,
     rank_series_validation,
+    select_numeric_timeslice_field,
 )
 
 
@@ -281,3 +283,61 @@ def test_dynamo_sglang_crosscheck_aligns_only_same_worker_phase_bins() -> None:
     assert result["worker_id"] == "decode-a"
     assert result["common_phase_second_bins"] == 2
     assert result["dynamo_max"] == 2.0
+
+
+def test_timeslice_avg_precedence_is_explicit() -> None:
+    value, field = select_numeric_timeslice_field(
+        {"avg": 1.5, "value": 2, "last": 3, "max": 4},
+        ("avg", "value", "last", "max"),
+    )
+
+    assert value == 1.5
+    assert field == "avg"
+
+
+def test_missing_requested_timeslice_field_never_falls_back() -> None:
+    value, field = select_numeric_timeslice_field({"avg": 1.5, "max": 4}, ("last",))
+
+    assert value is None
+    assert field is None
+
+
+def test_occupancy_bin_note_never_labels_peak_as_instantaneous_unique_request_count() -> None:
+    note = occupancy_bin_scope_note("avg")
+
+    assert "avg" in note
+    assert "not an instantaneous unique-request maximum" in note
+
+
+def test_generic_decode_queue_zero_does_not_erase_pd_specific_queues() -> None:
+    rows = pd.DataFrame(
+        [
+            {
+                "component": "decode",
+                "worker_id": worker,
+                "timeslice_start_ns": 0,
+                "timeslice_end_ns": 10,
+                "waiting_requests": 0,
+                "decode_prealloc_queue_requests": prealloc,
+                "decode_transfer_queue_requests": transfer,
+            }
+            for worker, prealloc, transfer in (("a", 2, 1), ("b", 3, 3))
+        ]
+    )
+
+    _, summary = intersect_worker_intervals(
+        rows,
+        component="decode",
+        worker_ids=("a", "b"),
+        value_columns=(
+            "waiting_requests",
+            "decode_prealloc_queue_requests",
+            "decode_transfer_queue_requests",
+        ),
+        profile_duration_ns=10,
+    )
+
+    metrics = summary.set_index("metric")
+    assert metrics.loc["waiting_requests", "max"] == 0.0
+    assert metrics.loc["decode_prealloc_queue_requests", "max"] == 5.0
+    assert metrics.loc["decode_transfer_queue_requests", "max"] == 4.0
