@@ -1,0 +1,7 @@
+source_input_token_bucket,request_count,source_input_tokens_min,source_input_tokens_max,ttft_median_ms,ttft_p90_ms,weighted_itl_ms,weighted_decode_tps,output_tokens_total,metric_scope
+<32k,3,30784.0,30912.0,765.67404,1378.1270095999998,10.812776088578088,92.48318764839075,432.0,source-workload input proxy; not target GLM logical context
+32-64k,26,33088.0,62336.0,903.9846755,2509.076913,10.557495357950714,94.71943544326665,13377.0,source-workload input proxy; not target GLM logical context
+64-128k,90,64704.0,117696.0,1121.2812325,3996.6999920000058,11.339680660894842,88.18590486842577,23826.0,source-workload input proxy; not target GLM logical context
+128-192k,0,,,,,,,,source-workload input proxy; not target GLM logical context
+192-256k,0,,,,,,,,source-workload input proxy; not target GLM logical context
+256k+,0,,,,,,,,source-workload input proxy; not target GLM logical context

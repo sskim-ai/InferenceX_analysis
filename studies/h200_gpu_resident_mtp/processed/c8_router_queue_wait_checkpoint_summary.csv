@@ -1,0 +1,2 @@
+profile_request_count_with_checkpoint,checkpoint_event_count,checkpoint_wait_ms_median,checkpoint_wait_ms_p90,checkpoint_wait_ms_max,classification,scope_note
+18,18,16374.5,25483.600000000002,27520.0,Evidence,Dynamo KV-router long-wait refresh checkpoint; not final end-to-end H200 scheduler queue time.

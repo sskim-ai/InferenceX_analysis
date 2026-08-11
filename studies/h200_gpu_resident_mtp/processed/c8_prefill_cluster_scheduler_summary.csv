@@ -1,0 +1,3 @@
+component,metric,max,p50,p90,p95,positive_fraction,status,reconstruction_method,notes
+prefill,running_requests,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,withheld: CP rank-local counters lack a validated per-worker unique logical-request union,"Workers 694d9fdfb4d8ee13, 694d9fdfb4d8ee15; summing rank envelopes or ranks is not valid."
+prefill,waiting_requests,Unknown,Unknown,Unknown,Unknown,Unknown,Unknown,withheld: CP rank-local counters lack a validated per-worker unique logical-request union,"Workers 694d9fdfb4d8ee13, 694d9fdfb4d8ee15; summing rank envelopes or ranks is not valid."

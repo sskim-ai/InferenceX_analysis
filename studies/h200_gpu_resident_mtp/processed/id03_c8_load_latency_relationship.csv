@@ -1,0 +1,6 @@
+predictor,outcome,sample_count,spearman_rho,p_value,classification,notes
+system_inflight_at_start,ttft_ms,119,0.02392371188807577,0.79620690627558,Evidence,"Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate"
+system_inflight_at_start,e2e_ms,119,0.022014426042468154,0.8121580092108245,Evidence,"Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate"
+system_inflight_at_start,itl_ms,119,0.5146858251578318,2.1231784518804686e-09,Evidence,"Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate"
+root_inflight_at_start,ttft_ms,119,-0.12964246109146327,0.15994918565893382,Evidence,"Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate"
+subagent_inflight_at_start,ttft_ms,119,0.06344741827135504,0.4930189241254894,Evidence,"Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate"

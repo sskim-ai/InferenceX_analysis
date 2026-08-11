@@ -1,0 +1,2 @@
+context_202752_subset_status,reason,logical_prompt_metric_observed_row_count,forbidden_proxies,required_future_evidence
+unavailable_exact_target_tokenization,no_request_level_target_model_logical_prompt_metric_in_public_profile_or_join,0,input_sequence_length; source_input_tokens,exact target logical prompt tokens + requested output limit + documented loader/server fit rule

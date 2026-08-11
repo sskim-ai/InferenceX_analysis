@@ -127,34 +127,381 @@
 
 ## ID01 Key Metrics
 
-| root_trace_id | concurrency | all_request_count | warmup_count | profiled_request_count | output_tokens_total | ttft_mean_ms | ttft_median_ms | ttft_p90_ms | itl_sample_count | weighted_decode_tps | e2e_median_ms | wall_span_s | wall_output_tps | error_count | cancellation_count | sample_quality |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 8 | 69 | 11 | 58 | 941 | 13250.4 | 9300.9 | 31640.6 | 1 | 93.4123 | 9649.18 | 3276.51 | 0.287196 | 0 | 0 | observed |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 12 | 56 | 11 | 45 | 45 | 29698.6 | 29178.2 | 41582.9 | 0 |  | 29178.2 | 3290.48 | 0.0136758 | 0 | 0 | observed |
-| 0196085d85d2075a50b74cd8795ffbdcea9a | 16 | 49 | 11 | 38 | 38 | 44346.4 | 32193.5 | 86996.6 | 0 |  | 32193.5 | 3276.45 | 0.0115979 | 0 | 0 | observed |
+| root_trace_id | concurrency | all_request_count | warmup_count | profiled_request_count | output_tokens_total | ttft_mean_ms | ttft_median_ms | ttft_p90_ms | itl_sample_count | weighted_decode_tps | e2e_median_ms | wall_span_s | wall_output_tps | error_count | cancellation_count | sample_quality | decode_tps_comparison_status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 8 | 69 | 11 | 58 | 941 | 13250.4 | 9300.9 | 31640.6 | 1 | 93.4123 | 9649.18 | 3276.51 | 0.287196 | 0 | 0 | observed | suppressed_n_lt_3_descriptive_only |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 12 | 56 | 11 | 45 | 45 | 29698.6 | 29178.2 | 41582.9 | 0 |  | 29178.2 | 3290.48 | 0.0136758 | 0 | 0 | observed | suppressed_n_lt_3_descriptive_only |
+| 0196085d85d2075a50b74cd8795ffbdcea9a | 16 | 49 | 11 | 38 | 38 | 44346.4 | 32193.5 | 86996.6 | 0 |  | 32193.5 | 3276.45 | 0.0115979 | 0 | 0 | observed | suppressed_n_lt_3_descriptive_only |
+
+- **Evidence:** ID01 c8 has one ITL-valid request. Its weighted decode TPS is descriptive only (n=1) and is excluded from the default comparative TPS figure.
+
 
 ## ID02 Key Metrics
 
-| root_trace_id | concurrency | all_request_count | warmup_count | profiled_request_count | output_tokens_total | ttft_mean_ms | ttft_median_ms | ttft_p90_ms | itl_sample_count | weighted_decode_tps | e2e_median_ms | wall_span_s | wall_output_tps | error_count | cancellation_count | sample_quality |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 8 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 12 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse |
-| 02bc0afb13f7a2d9efa86c28511261d85c0e | 16 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse |
+| root_trace_id | concurrency | all_request_count | warmup_count | profiled_request_count | output_tokens_total | ttft_mean_ms | ttft_median_ms | ttft_p90_ms | itl_sample_count | weighted_decode_tps | e2e_median_ms | wall_span_s | wall_output_tps | error_count | cancellation_count | sample_quality | decode_tps_comparison_status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 8 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse | suppressed_n_lt_3_descriptive_only |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 12 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse | suppressed_n_lt_3_descriptive_only |
+| 02bc0afb13f7a2d9efa86c28511261d85c0e | 16 | 8 | 8 | 0 |  |  |  |  | 0 |  |  |  |  | 0 | 0 | sparse | suppressed_n_lt_3_descriptive_only |
 
-- **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` as an observed raw counter, but neither it nor `cache_load_tps` is a validated logical-prompt or physical-KV metric.
+## ID03 Deep Dive
+
+### Evidence
+
+- Canonical ID: 07dd40536557a1d6440a923557c3129dc929.
+### Public c8/c12/c16 coverage
+
+| concurrency | profiling_phase_count | successful_profiling_count | distinct_exact_source_key_count_profile | source_coverage_ratio_profile | warmup_count |
+| --- | --- | --- | --- | --- | --- |
+| 8 | 119 | 119 | 119 | 1 | 0 |
+| 12 | 112 | 112 | 112 | 0.941176 | 7 |
+| 16 | 13 | 13 | 13 | 0.109244 | 13 |
+
+### TTFT / TPS scaling
+
+| concurrency | ttft_median_ms | ttft_p90_ms | weighted_decode_tps | itl_sample_count | ttft_inflation_vs_c8 | tps_retention_vs_c8 | wall_throughput_ratio_vs_c8 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 8 | 1080.57 | 3326.14 | 90.4544 | 119 | 1 | 1 | 1 |
+| 12 | 1729.72 | 17659.2 | 88.3243 | 112 | 1.60075 | 0.976452 | 0.488553 |
+| 16 | 1647.92 | 41057.6 | 87.6317 | 13 | 1.52505 | 0.968795 | 0.166771 |
+
+### Exact overlap
+
+| pair | matched_source_key_count | same_output_length_count | strict_ttft_count | strict_decode_count | median_ttft_ratio_right_over_left | weighted_itl_ratio_right_over_left | coverage_overlap_ratio_jaccard |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| c8_c12 | 112 | 112 | 112 | 112 | 1.45117 | 1.01475 | 0.941176 |
+| c8_c16 | 13 | 13 | 13 | 13 | 1.28084 | 1.041 | 0.109244 |
+| c12_c16 | 13 | 13 | 13 | 13 | 0.32583 | 1.0058 | 0.116071 |
+
+### Context/token metric limitation
+
+| context_202752_subset_status | reason | logical_prompt_metric_observed_row_count | forbidden_proxies | required_future_evidence |
+| --- | --- | --- | --- | --- |
+| unavailable_exact_target_tokenization | no_request_level_target_model_logical_prompt_metric_in_public_profile_or_join | 0 | input_sequence_length; source_input_tokens | exact target logical prompt tokens + requested output limit + documented loader/server fit rule |
+
+- Raw AIPerf log scheduling evidence is in processed/id03_replay_scheduling_evidence.csv; it documents time-limited profiling, randomized starts, warmup handoff, and recycling without claiming a single causal mechanism.
+### Inference
+
+- c8 is the primary public reference because it has full observed ID03 source-key profiling coverage and enough ITL-valid requests for a reviewable decode-TPS distribution; c12/c16 retain narrower matched subsets.
+
+### Unknown
+
+- The public package has no request-level target logical prompt token metric or requested output limit, so a 202,752-compatible exact subset is unavailable.
+- Public c8 is mixed-root global concurrency on 2P2D 32×H200 with MTP. It is not established as equivalent to any local cpyN label.
+
+### Files for ID03 comparison
+
+1. studies/h200_gpu_resident_mtp/reports/11_id03_deep_dive.md
+2. studies/h200_gpu_resident_mtp/reports/12_id03_local_cpy_comparison_plan.md
+3. studies/h200_gpu_resident_mtp/processed/id03_h200_reference_requests.csv
+4. studies/h200_gpu_resident_mtp/processed/id03_source_coverage_by_concurrency.csv
+5. studies/h200_gpu_resident_mtp/processed/id03_cross_concurrency_summary.csv
+6. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c8_c12.csv
+7. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c8_c16.csv
+8. studies/h200_gpu_resident_mtp/processed/id03_exact_match_c12_c16.csv
+9. studies/h200_gpu_resident_mtp/handoff/id03_local_join_contract.md
+
+
+## c8 Concurrency / Scheduler Reconstruction
+
+### Evidence
+
+- **AgentX root lanes:** c8 configures eight root-trajectory lanes. It is not a declaration of eight HTTP or SGLang-running requests.
+- **HTTP/client interval overlap:** max=11; time-weighted mean=3.968259088179123; P90=7.0; P95=8.0. These are `[request_start_ns, request_end_ns)` profile intervals with end-before-start tie handling, never relabelled as GPU or scheduler running concurrency.
+- **Root/subagent overlap:** maximum root=7; maximum subagent=7. Branch origin is not backend worker or GPU affinity.
+- **ID03 c8 load relation:** unadjusted Spearman HTTP-overlap-at-start vs TTFT: ρ=0.0239237, p=0.796207, n=119.
+- **Observed scheduler counters:** prefill rank-series maximum running/waiting=5.0/5.0; decode rank-series maximum running/waiting=2.0/0.0. These are explicit AIPerf public server-metrics export series, not summed worker or cluster totals. The later worker/cluster section below supersedes this inventory for the separately validated decode DP-shard reconstruction; it does not turn rank-series values into a P/D-global count.
+
+| metric | value | status | evidence_scope | notes |
+| --- | --- | --- | --- | --- |
+| agentx_root_concurrency_configured | 8 | Evidence | AIPerf c8 command / trajectory lanes | Configured root-trajectory lane count; not HTTP or scheduler running count. |
+| http_max_inflight | 11 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_mean_inflight | 3.968259088179123 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p50_inflight | 4.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p75_inflight | 5.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p90_inflight | 7.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p95_inflight | 8.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_p99_inflight | 9.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_max_root_inflight | 7 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_max_subagent_inflight | 7 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_mean_root_inflight | 2.587678942023965 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_time_weighted_mean_subagent_inflight | 1.3805801461551577 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_8 | 0.05264858957537656 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_12 | 0.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_16 | 0.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_24 | 0.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| http_fraction_time_inflight_ge_32 | 0.0 | Evidence | 957 successful profiling request [start,end) intervals | HTTP/client-observed overlap; never interpreted as scheduler running or GPU concurrency. |
+| prefill_configured_max_running | 32 | Evidence | public startup ServerArgs / runtime evidence | Configured capacity, not observed runtime running-request count. |
+| decode_configured_max_running | 200 | Evidence | public startup ServerArgs / runtime evidence | Configured capacity, not observed runtime running-request count. |
+| prefill_observed_max_running | 5.0 | Evidence | AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series | Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total. |
+| prefill_observed_max_waiting | 5.0 | Evidence | AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series | Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total. |
+| decode_observed_max_running | 2.0 | Evidence | AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series | Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total. |
+| decode_observed_max_waiting | 0.0 | Evidence | AIPerf profiling-window 1-second server-metrics timeslices; maximum across endpoint/rank-export series | Rank-export series are not summed to a worker or cluster total; this is not a global scheduler total. |
+| router_queue_wait_checkpoint_profile_request_count | 18 | Evidence | exact frontend router request ID -> x_request_id -> profiling row join | Long-wait refresh checkpoints are not final scheduler queue time. |
+| router_queue_wait_checkpoint_max_ms | 27520.0 | Evidence | exact frontend router request ID -> x_request_id -> profiling row join | Long-wait refresh checkpoint, not full per-request queue decomposition. |
+| h200_explicit_queue_time | aggregate_scheduler_histogram_and_router_checkpoints_available | Evidence | SGLang queue_time_seconds rank-series histogram plus exact long-wait router checkpoint events | No complete request-level scheduler lifecycle join exists; TTFT cannot be decomposed into queue versus execution. |
+| routing_exact_profile_join_count | 957 | Evidence | raw profile x_request_id -> frontend request-completed log | Dynamo worker routing only, not GPU affinity. |
+
+| valid_interval_request_count | max_inflight | time_weighted_mean_inflight | time_weighted_p90_inflight | time_weighted_p95_inflight | same_timestamp_policy |
+| --- | --- | --- | --- | --- | --- |
+| 957 | 11 | 3.96826 | 7 | 8 | all end events before starts; start context includes all same-timestamp starts |
+
+| scope | source_branch_type | request_count | ttft_median_ms | ttft_p90_ms | e2e_median_ms | e2e_p90_ms | weighted_itl_ms | weighted_decode_tps | system_inflight_at_start_median | system_inflight_at_start_p90 | metric_scope |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| all_c8 | root | 518 | 2194.89 | 20816.7 | 10146.4 | 40657.5 | 10.7587 | 92.9482 | 4 | 7 | source branch origin; not backend worker/GPU affinity |
+| all_c8 | subagent | 439 | 1195.63 | 10757.9 | 5590.29 | 25176.3 | 10.9173 | 91.5975 | 5 | 8 | source branch origin; not backend worker/GPU affinity |
+| id03_c8 | root | 9 | 1155.27 | 3317.08 | 4624.45 | 44713.3 | 10.5072 | 95.1732 | 3 | 4.4 | source branch origin; not backend worker/GPU affinity |
+| id03_c8 | subagent | 110 | 1071.77 | 3316.38 | 3503.7 | 7217.62 | 11.2503 | 88.8866 | 5 | 8 | source branch origin; not backend worker/GPU affinity |
+
+| predictor | outcome | sample_count | spearman_rho | p_value | classification | notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| system_inflight_at_start | ttft_ms | 119 | 0.0239237 | 0.796207 | Evidence | Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate |
+| system_inflight_at_start | e2e_ms | 119 | 0.0220144 | 0.812158 | Evidence | Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate |
+| system_inflight_at_start | itl_ms | 119 | 0.514686 | 2.12318e-09 | Evidence | Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate |
+| root_inflight_at_start | ttft_ms | 119 | -0.129642 | 0.159949 | Evidence | Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate |
+| subagent_inflight_at_start | ttft_ms | 119 | 0.0634474 | 0.493019 | Evidence | Spearman on ID03 public c8 profile rows; HTTP interval overlap at request start, not an SGLang scheduler counter or causal estimate |
+
+| component | endpoint_url | worker_id | metric | rank_series_count | timeslice_sample_count_total | observed_min_across_rank_series | observed_max_across_rank_series | rank_series_median_avg | rank_series_median_p50 | rank_series_median_p90 | rank_series_median_p95 | rank_series_min_of_max | rank_series_max_of_max | description | scope_note | summary_sampling | classification |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| prefill | http://10.49.123.178:7501/metrics | 694d9fdfb4d8ee15 | sglang:num_decode_prealloc_queue_reqs | 8 | 28976 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the decode prealloc queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.14.237:7500/metrics | 694d9fdfb4d8ee13 | sglang:num_decode_prealloc_queue_reqs | 8 | 28920 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the decode prealloc queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.123.178:7501/metrics | 694d9fdfb4d8ee15 | sglang:num_decode_transfer_queue_reqs | 8 | 28976 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the decode transfer queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.14.237:7500/metrics | 694d9fdfb4d8ee13 | sglang:num_decode_transfer_queue_reqs | 8 | 28920 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the decode transfer queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.123.178:7501/metrics | 694d9fdfb4d8ee15 | sglang:num_prefill_bootstrap_queue_reqs | 8 | 28976 | 0 | 2 | 0.166713 | 0 | 1 | 1 | 2 | 2 | The number of requests in the prefill bootstrap queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.14.237:7500/metrics | 694d9fdfb4d8ee13 | sglang:num_prefill_bootstrap_queue_reqs | 8 | 28920 | 0 | 5 | 0.257953 | 0 | 1 | 1 | 5 | 5 | The number of requests in the prefill bootstrap queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.123.178:7501/metrics | 694d9fdfb4d8ee15 | sglang:num_prefill_inflight_queue_reqs | 8 | 28976 | 0 | 4 | 0.148353 | 0 | 1 | 1 | 4 | 4 | The number of requests in the prefill inflight queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.14.237:7500/metrics | 694d9fdfb4d8ee13 | sglang:num_prefill_inflight_queue_reqs | 8 | 28920 | 0 | 3 | 0.202951 | 0 | 1 | 1 | 3 | 3 | The number of requests in the prefill inflight queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.123.178:7501/metrics | 694d9fdfb4d8ee15 | sglang:num_queue_reqs | 8 | 28976 | 0 | 5 | 0.116648 | 0 | 0 | 1 | 5 | 5 | The number of requests in the waiting queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.14.237:7500/metrics | 694d9fdfb4d8ee13 | sglang:num_queue_reqs | 8 | 28920 | 0 | 5 | 0.117012 | 0 | 0 | 1 | 5 | 5 | The number of requests in the waiting queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.123.178:7501/metrics | 694d9fdfb4d8ee15 | sglang:num_running_reqs | 8 | 28976 | 0 | 5 | 0.268912 | 0 | 1 | 1 | 5 | 5 | The number of running requests. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.14.237:7500/metrics | 694d9fdfb4d8ee13 | sglang:num_running_reqs | 8 | 28920 | 0 | 4 | 0.356846 | 0 | 1 | 1 | 4 | 4 | The number of running requests. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| prefill | http://10.49.123.178:7501/metrics | 694d9fdfb4d8ee15 | sglang:queue_time_seconds | 8 |  |  |  | 1.89882 | 0.00242168 | 5.91515 | 16.0662 |  |  | Histogram of queueing time in seconds. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | aggregate AIPerf histogram/export statistics; no usable gauge timeslice value for this metric | Evidence |
+| prefill | http://10.49.14.237:7500/metrics | 694d9fdfb4d8ee13 | sglang:queue_time_seconds | 8 |  |  |  | 1.33629 | 0.00272312 | 4.18158 | 9.12922 |  |  | Histogram of queueing time in seconds. | AIPerf public server-metrics profiling export; explicit SGLang metric; prefill endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | aggregate AIPerf histogram/export statistics; no usable gauge timeslice value for this metric | Evidence |
+
+| component | endpoint_url | worker_id | metric | rank_series_count | timeslice_sample_count_total | observed_min_across_rank_series | observed_max_across_rank_series | rank_series_median_avg | rank_series_median_p50 | rank_series_median_p90 | rank_series_median_p95 | rank_series_min_of_max | rank_series_max_of_max | description | scope_note | summary_sampling | classification |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| decode | http://10.49.115.1:7503/metrics | 694d9fdfb4d8ee1b | sglang:num_decode_prealloc_queue_reqs | 8 | 28992 | 0 | 4 | 0.0108996 | 0 | 0 | 0 | 1 | 4 | The number of requests in the decode prealloc queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.62.108:7502/metrics | 694d9fdfb4d8ee18 | sglang:num_decode_prealloc_queue_reqs | 8 | 28856 | 0 | 4 | 0.0104196 | 0 | 0 | 0 | 1 | 4 | The number of requests in the decode prealloc queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.115.1:7503/metrics | 694d9fdfb4d8ee1b | sglang:num_decode_transfer_queue_reqs | 8 | 28992 | 0 | 2 | 0.0116584 | 0 | 0 | 0 | 0 | 2 | The number of requests in the decode transfer queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.62.108:7502/metrics | 694d9fdfb4d8ee18 | sglang:num_decode_transfer_queue_reqs | 8 | 28856 | 0 | 2 | 0.00764717 | 0 | 0 | 0 | 0 | 2 | The number of requests in the decode transfer queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.115.1:7503/metrics | 694d9fdfb4d8ee1b | sglang:num_prefill_bootstrap_queue_reqs | 8 | 28992 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the prefill bootstrap queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.62.108:7502/metrics | 694d9fdfb4d8ee18 | sglang:num_prefill_bootstrap_queue_reqs | 8 | 28856 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the prefill bootstrap queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.115.1:7503/metrics | 694d9fdfb4d8ee1b | sglang:num_prefill_inflight_queue_reqs | 8 | 28992 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the prefill inflight queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.62.108:7502/metrics | 694d9fdfb4d8ee18 | sglang:num_prefill_inflight_queue_reqs | 8 | 28856 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the prefill inflight queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.115.1:7503/metrics | 694d9fdfb4d8ee1b | sglang:num_queue_reqs | 8 | 28992 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the waiting queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.62.108:7502/metrics | 694d9fdfb4d8ee18 | sglang:num_queue_reqs | 8 | 28856 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | The number of requests in the waiting queue. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.115.1:7503/metrics | 694d9fdfb4d8ee1b | sglang:num_running_reqs | 8 | 28992 | 0 | 2 | 0.292081 | 0 | 1 | 1 | 1 | 2 | The number of running requests. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.62.108:7502/metrics | 694d9fdfb4d8ee18 | sglang:num_running_reqs | 8 | 28856 | 0 | 2 | 0.346918 | 0 | 1 | 1 | 2 | 2 | The number of running requests. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | profiling-window 1-second AIPerf timeslice samples; per-rank series are summarized but never summed | Evidence |
+| decode | http://10.49.115.1:7503/metrics | 694d9fdfb4d8ee1b | sglang:queue_time_seconds | 8 |  |  |  | 0.000178409 | 0.000172711 | 0.000326799 | 0.000345477 |  |  | Histogram of queueing time in seconds. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | aggregate AIPerf histogram/export statistics; no usable gauge timeslice value for this metric | Evidence |
+| decode | http://10.49.62.108:7502/metrics | 694d9fdfb4d8ee18 | sglang:queue_time_seconds | 8 |  |  |  | 0.000196121 | 0.000185756 | 0.000366957 | 0.000389268 |  |  | Histogram of queueing time in seconds. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | aggregate AIPerf histogram/export statistics; no usable gauge timeslice value for this metric | Evidence |
+
+### Inference
+
+- c8 does **not** imply only eight simultaneous HTTP requests: the observed interval maximum exceeds eight. It also cannot be converted into actual SGLang batch size, per-worker active request total, or GPU sequence count.
+- The public counters provide evidence of rank-series pressure and occasional prefill waiting, but not a cluster-global scheduler-saturation conclusion. Configured prefill/decode limits (32/200) remain capacity settings, not observed runtime totals.
+- The public ID03 relation is descriptive only: it neither proves a queueing cause nor controls for workload shape, route, cache state, or MTP behavior.
+
+### Unknown
+
+- Global scheduler saturation is unknown. Rank-series counters require topology/ownership validation; the later worker/cluster reconstruction validates decode DP-shard aggregation only, while prefill and unique P/D global totals remain Unknown.
+- A complete per-request H200 queue time is unavailable. The package has aggregate SGLang queue-time evidence and a limited set of exact Dynamo router long-wait checkpoints, but no request-correlated accepted→queued→running→first-token lifecycle. TTFT cannot be decomposed into queueing versus execution from these data alone.
+- Selected Dynamo worker routing is not backend GPU affinity; no per-request prefill/decode scheduler-pressure join is established.
+
+### Files ChatGPT should read for c8 concurrency
+
+1. `studies/h200_gpu_resident_mtp/reports/13_c8_concurrency_scheduler_reconstruction.md`
+2. `studies/h200_gpu_resident_mtp/processed/c8_concurrency_reconstruction_summary.csv`
+3. `studies/h200_gpu_resident_mtp/processed/c8_http_concurrency_summary.csv`
+4. `studies/h200_gpu_resident_mtp/processed/c8_requests_with_inflight_context.csv`
+5. `studies/h200_gpu_resident_mtp/processed/id03_c8_with_system_load.csv`
+6. `studies/h200_gpu_resident_mtp/processed/id03_c8_backend_pressure.csv`
+7. `studies/h200_gpu_resident_mtp/processed/id03_c8_load_latency_relationship.csv`
+8. `studies/h200_gpu_resident_mtp/processed/id03_c8_load_buckets.csv`
+9. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_metric_inventory.csv`
+10. `studies/h200_gpu_resident_mtp/processed/c8_prefill_scheduler_summary.csv`
+11. `studies/h200_gpu_resident_mtp/processed/c8_decode_scheduler_summary.csv`
+12. `studies/h200_gpu_resident_mtp/processed/c8_backend_worker_routing_summary.csv`
+13. `studies/h200_gpu_resident_mtp/processed/c8_router_queue_wait_checkpoint_summary.csv`
+
+
+## c8 Worker/Cluster Scheduler Reconstruction
+
+### Evidence
+
+- **Prefill TP verdict:** TP8/ATTN_CP8 metrics are CP-rank local scheduler views. Raw series are highly synchronized but not perfectly identical; neither TP8 multiplication nor a unique-worker gauge is proven.
+- **Prefill rank envelopes:** running maxima are 5.0 and 4.0; these are pressure evidence, not unique worker request counts.
+- **Decode DP verdict:** TP8/DP8 DP-attention exposes independent rank-local scheduler shards. Exact source semantics plus complete raw grids validate summing ranks within a decode worker.
+- **Decode cluster:** exact endpoint-interval intersection gives P90=10.0 and highest reconstructed 1-s-bin sum=17.0 (Validated reconstruction); this is not an instantaneous unique-request maximum. Generic `sglang:num_queue_reqs` is zero in every observed decode DP-rank sample.
+- **Dynamo cross-check:** component inflight is correlated with but not equal to SGLang running; frontend/request-plane counters remain separate layers.
+
+| metric | value | status | scope | notes |
+| --- | --- | --- | --- | --- |
+| http_max_inflight | 11 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_time_weighted_mean | 3.968259088179123 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_p90 | 7.0 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_p95 | 8.0 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| prefill_worker_0_max_running | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_0_rank_envelope_max_running | 5.0 | Strong inference | rank-envelope running requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_0_max_waiting | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_0_rank_envelope_max_waiting | 5.0 | Strong inference | rank-envelope queue requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_1_max_running | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_1_rank_envelope_max_running | 4.0 | Strong inference | rank-envelope running requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_1_max_waiting | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_1_rank_envelope_max_waiting | 5.0 | Strong inference | rank-envelope queue requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_cluster_max_running | Unknown | Unknown | two prefill workers' unique logical request union | Do not sum TP ranks or strong-inference rank envelopes across workers. |
+| prefill_cluster_p50_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p90_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p95_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_max_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Do not sum TP ranks or strong-inference rank envelopes across workers. |
+| prefill_cluster_p50_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p90_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p95_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_waiting_positive_fraction | Unknown | Unknown | two prefill workers' unique logical request union | Rank-local positive queue evidence exists but cluster positive fraction is not reconstructable. |
+| decode_worker_0_max_running | 9.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_0_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_1_max_running | 10.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_1_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_cluster_max_running | 17.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Highest reconstructed sum across exported one-second scheduler occupancy bins. Not an instantaneous unique-request maximum. |
+| decode_cluster_p50_running | 4.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_p90_running | 10.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_p95_running | 12.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Time-weighted distribution of reconstructed exported one-second scheduler occupancy-bin sums; not instantaneous unique-request counts. |
+| decode_cluster_max_waiting | 0.0 | Validated reconstruction | two decode workers, exact intersections of exported one-second scheduler occupancy bins | Generic SGLang decode waiting queue only; this does not assert that all P/D-specific decode queues were zero. |
+
+- Table is truncated to 30 rows.
+
+| component | worker_id | metric | timeslice_sample_count | rank_envelope_max_of_min | rank_envelope_p50_of_median | rank_envelope_p90_of_median | rank_envelope_p95_of_median | rank_envelope_max | unique_worker_value | status | rank_semantics_verdict | reconstruction_method | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| prefill | 694d9fdfb4d8ee13 | rank-envelope running requests | 3615 | 4 | 0 | 1 | 1 | 4 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee13 | rank-envelope waiting/queue requests | 3615 | 5 | 0 | 0 | 1 | 5 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee13 | rank-envelope prefill bootstrap queue | 3615 | 5 | 0 | 1 | 1 | 5 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee13 | rank-envelope prefill inflight queue | 3615 | 3 | 0 | 1 | 1 | 3 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee15 | rank-envelope running requests | 3622 | 5 | 0 | 1 | 1 | 5 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee15 | rank-envelope waiting/queue requests | 3622 | 5 | 0 | 0 | 1 | 5 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee15 | rank-envelope prefill bootstrap queue | 3622 | 2 | 0 | 1 | 1 | 2 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee15 | rank-envelope prefill inflight queue | 3622 | 4 | 0 | 1 | 1 | 4 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+
+| component | worker_id | metric | timeslice_sample_count | max | p50 | p90 | p95 | positive_fraction | status | reconstruction_method | notes | dp_semantics | decode_waiting_all_zero_raw_rank_series |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| decode | 694d9fdfb4d8ee18 | running_requests | 3607 | 10 | 2 | 7 | 8 | 0.747436 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee18 | waiting_requests | 3607 | 0 | 0 | 0 | 0 | 0 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) | True |
+| decode | 694d9fdfb4d8ee18 | decode_prealloc_queue_requests | 3607 | 4 | 0 | 2 | 3 | 0.207929 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee18 | decode_transfer_queue_requests | 3607 | 2 | 0 | 0 | 1 | 0.0629332 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee1b | running_requests | 3624 | 9 | 1 | 7 | 8 | 0.665287 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee1b | waiting_requests | 3624 | 0 | 0 | 0 | 0 | 0 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) | True |
+| decode | 694d9fdfb4d8ee1b | decode_prealloc_queue_requests | 3624 | 4 | 0 | 1 | 1 | 0.143488 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee1b | decode_transfer_queue_requests | 3624 | 3 | 0 | 0 | 1 | 0.0706402 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+
+| component | metric | worker_a | worker_b | overlap_segment_count | common_worker_overlap_s | common_worker_overlap_fraction_of_profile | max | time_weighted_mean | p50 | p75 | p90 | p95 | p99 | positive_fraction | status | reconstruction_method | decode_waiting_all_zero_raw_rank_series | timeslice_selected_field | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| decode | running_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 17 | 5.14057 | 4 | 8 | 10 | 12 | 15 | 0.917739 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | avg | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. selected raw avg field from exported one-second scheduler occupancy bins; not an instantaneous unique-request maximum. |
+| decode | waiting_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections | True | avg | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+| decode | decode_prealloc_queue_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 5 | 0.541441 | 0 | 1 | 2 | 3 | 4 | 0.325967 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | avg | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+| decode | decode_transfer_queue_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 4 | 0.143479 | 0 | 0 | 1 | 1 | 2 | 0.123454 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | avg | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+
+## Decode occupancy sanity-check
+
+- **Selected raw timeslice field:** `avg`. The raw-field audit, sensitivity variants, and worker-timeslice alignment are versioned below; no missing field is fabricated or silently substituted.
+- **Preferred label:** *highest reconstructed sum across overlapping exported one-second scheduler-occupancy bins*. It is not an instantaneous HTTP concurrency or unique P/D request maximum.
+- **Queue scope:** generic `num_queue_reqs=0` does not imply all decode/P-D queues were zero; preallocation and transfer queues are retained separately. Report 14 and Report 15 apply this same scope label.
+
+- **Validation:** the post-regeneration command results are recorded in `studies/h200_gpu_resident_mtp/processed/validation_status.md`.
+
+| metric | worker_id | rank | timeslice_count | avg_present_fraction | last_present_fraction | max_present_fraction | value_present_fraction | avg_fractional_value_count | avg_differs_from_max_count | selected_field_under_current_parser |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 0 | 3607 | 1 | 0 | 1 | 0 | 15 | 15 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 1 | 3607 | 1 | 0 | 1 | 0 | 26 | 26 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 2 | 3607 | 1 | 0 | 1 | 0 | 18 | 18 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 3 | 3607 | 1 | 0 | 1 | 0 | 26 | 26 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 4 | 3607 | 1 | 0 | 1 | 0 | 17 | 17 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 5 | 3607 | 1 | 0 | 1 | 0 | 24 | 26 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 6 | 3607 | 1 | 0 | 1 | 0 | 14 | 14 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee18 | 7 | 3607 | 1 | 0 | 1 | 0 | 28 | 31 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 0 | 3624 | 1 | 0 | 1 | 0 | 23 | 24 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 1 | 3624 | 1 | 0 | 1 | 0 | 18 | 18 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 2 | 3624 | 1 | 0 | 1 | 0 | 24 | 24 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 3 | 3624 | 1 | 0 | 1 | 0 | 22 | 22 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 4 | 3624 | 1 | 0 | 1 | 0 | 25 | 25 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 5 | 3624 | 1 | 0 | 1 | 0 | 23 | 23 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 6 | 3624 | 1 | 0 | 1 | 0 | 29 | 29 | avg |
+| sglang:num_running_reqs | 694d9fdfb4d8ee1b | 7 | 3624 | 1 | 0 | 1 | 0 | 18 | 18 | avg |
+
+| timeslice_field | availability_status | raw_rank_timeslice_count | raw_field_present_fraction | cluster_overlap_segment_count | cluster_overlap_s | mean | p50 | p90 | p95 | p99 | highest_reconstructed_1s_bin_sum | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| avg | Evidence | 57848 | 1 | 7185 | 3592.85 | 5.140572157500383 | 4.0 | 10.0 | 12.0 | 15.0 | 17.0 | Exact endpoint-interval intersection after validated DP-shard sums. Values are exported one-second occupancy-bin statistics, not instantaneous unique requests. |
+| last | Unavailable | 57848 | 0 |  |  | Unknown | Unknown | Unknown | Unknown | Unknown | Unknown | The raw field was absent; no fallback value was invented. |
+| max | Evidence | 57848 | 1 | 7185 | 3592.85 | 5.1908523229398815 | 4.0 | 11.0 | 12.0 | 15.0 | 17.0 | Exact endpoint-interval intersection after validated DP-shard sums. Values are exported one-second occupancy-bin statistics, not instantaneous unique requests. |
+
+| worker_a | worker_b | intersection_segment_count | intersection_duration_min_ns | intersection_duration_p50_ns | intersection_duration_p90_ns | intersection_duration_p95_ns | intersection_duration_max_ns | worker_b_minus_a_start_offset_p50_ns | worker_b_minus_a_start_offset_p90_ns | worker_b_minus_a_start_offset_p95_ns | absolute_start_offset_p50_ns | absolute_start_offset_p90_ns | absolute_start_offset_p95_ns | availability_status | method | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 1.49116e+08 | 8.50466e+08 | 8.50884e+08 | 8.50884e+08 | 8.50884e+08 | -1.49116e+08 | 8.50884e+08 | 8.50884e+08 | 1.49116e+08 | 8.50884e+08 | 8.50884e+08 | Evidence | actual [start_ns,end_ns) endpoint-interval intersection; no nearest-neighbor, fill, or interpolation | Offsets compare the two exported backend timeslice grids, not request timestamps. |
+
+| queue_metric | max | p90 | positive_fraction | status | notes |
+| --- | --- | --- | --- | --- | --- |
+| Generic SGLang `num_queue_reqs` | 0 | 0 | 0 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+| Decode preallocation queue | 5 | 2 | 0.325967 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+| Decode transfer queue | 4 | 1 | 0.123454 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. Selected raw field: avg. |
+
+### Unknown
+
+- Prefill worker/cluster **unique** running and waiting remain Unknown: no CP-rank request-ID union is exported.
+- Prefill + decode cannot become unique system-global running: request-correlated P/D handoff and cross-stage deduplication are absent.
+- Decode `num_queue_reqs=0` is the named generic queue only, not a statement that PD prealloc/transfer queues are zero.
+
+### Files ChatGPT should read next
+
+1. `studies/h200_gpu_resident_mtp/reports/15_c8_scheduler_worker_cluster_reconstruction.md`
+2. `studies/h200_gpu_resident_mtp/processed/c8_cluster_scheduler_reconstruction.csv`
+3. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_rank_semantics_validation.csv`
+4. `studies/h200_gpu_resident_mtp/processed/c8_prefill_worker_scheduler_summary.csv`
+5. `studies/h200_gpu_resident_mtp/processed/c8_prefill_cluster_scheduler_summary.csv`
+6. `studies/h200_gpu_resident_mtp/processed/c8_decode_rank_scheduler_summary.csv`
+7. `studies/h200_gpu_resident_mtp/processed/c8_decode_worker_scheduler_summary.csv`
+8. `studies/h200_gpu_resident_mtp/processed/c8_decode_cluster_scheduler_summary.csv`
+9. `studies/h200_gpu_resident_mtp/processed/c8_decode_timeslice_field_semantics.csv`
+10. `studies/h200_gpu_resident_mtp/processed/c8_decode_cluster_field_sensitivity.csv`
+11. `studies/h200_gpu_resident_mtp/processed/c8_decode_timeslice_alignment_summary.csv`
+12. `studies/h200_gpu_resident_mtp/processed/c8_dynamo_sglang_concurrency_crosscheck.csv`
+13. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_source_semantics.csv`
+
+
+- **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` only as a raw profile counter; `raw_profile_cache_counter_tps` is not a validated logical-prompt or physical-KV metric.
 
 
 ## HiSparse c8 vs GPU-resident c8
 
-| comparison_scope | metric | hisparse_c8_value | gpu_resident_mtp_c8_value | gpu_resident_over_hisparse_ratio | sample_count | caveat |
-| --- | --- | --- | --- | --- | --- | --- |
-| run_level_unpaired_observed_system_difference | ttft_median_ms | 228708 | 1471.05 | 0.00643201 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | weighted_decode_tps | 32.5161 | 92.4771 | 2.84404 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | wall_output_tps | 23.5666 | 210.505 | 8.93234 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| run_level_unpaired_observed_system_difference | output_tokens_total | 84618 | 760694 | 8.98974 | 219 | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
-| source_key_matched_median_observed_system_ratio | ttft_ratio_gpu_resident_over_hisparse |  | 0.00880767 | 0.00880767 | 83 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
-| source_key_matched_median_observed_system_ratio | itl_ratio_gpu_resident_over_hisparse |  | 0.353382 | 0.353382 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
-| source_key_matched_median_observed_system_ratio | e2e_ratio_gpu_resident_over_hisparse |  | 0.0482293 | 0.0482293 | 83 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| comparison_scope | metric | hisparse_c8_value | gpu_resident_mtp_c8_value | gpu_resident_over_hisparse_ratio | hisparse_request_count | gpu_resident_request_count | exact_matched_source_key_count | strict_ttft_count | strict_decode_count | caveat |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| run_level_unpaired_observed_system_difference | ttft_median_ms | 228708 | 1471.05 | 0.00643201 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | weighted_decode_tps | 32.5161 | 92.4771 | 2.84404 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | wall_output_tps | 23.5666 | 210.505 | 8.93234 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| run_level_unpaired_observed_system_difference | output_tokens_total | 84618 | 760694 | 8.98974 | 219 | 957 |  |  |  | 16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate. |
+| source_key_matched_median_observed_system_ratio | ttft_ratio_gpu_resident_over_hisparse |  | 0.00880767 | 0.00880767 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| source_key_matched_median_observed_system_ratio | itl_ratio_gpu_resident_over_hisparse |  | 0.353382 | 0.353382 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+| source_key_matched_median_observed_system_ratio | e2e_ratio_gpu_resident_over_hisparse |  | 0.0482293 | 0.0482293 | 83 | 83 | 83 | 83 | 64 | Source-key matching controls workload identity only; it does not isolate a single architecture change. |
+
+## Approximate worker-normalized H200 context
+
+| comparison_label | comparison_kind | comparison_scope | hisparse_concurrency | gpu_resident_mtp_concurrency | hisparse_decode_worker_count | gpu_resident_mtp_decode_worker_count | metric | hisparse_value | gpu_resident_mtp_value | gpu_resident_over_hisparse_ratio | hisparse_request_count | gpu_resident_request_count | hisparse_root_id_count | gpu_resident_root_id_count | hisparse_itl_sample_count | gpu_resident_itl_sample_count | exact_matched_source_key_count | same_output_length_count | strict_ttft_count | strict_decode_count | matching_method | worker_normalization_basis | caveat |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | ttft_median_ms | 3319.23 | 1471.05 | 0.44319 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | itl_weighted_ms | 34.7805 | 10.8135 | 0.310907 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | weighted_decode_tps | 28.7518 | 92.4771 | 3.2164 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | wall_output_tps | 67.038 | 210.505 | 3.14008 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 4 | 8 | 1 | 2 | output_tokens_total | 243209 | 760694 | 3.12774 | 379 | 957 | 8 | 14 | 267 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 4 | 8 | 1 | 2 | ttft_ratio_gpu_resident_over_hisparse |  | 0.495075 | 0.495075 | 379 | 957 | 8 | 14 | 267 | 853 | 120 | 120 | 120 | 68 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 4 | 8 | 1 | 2 | itl_ratio_gpu_resident_over_hisparse |  | 0.337038 | 0.337038 | 379 | 957 | 8 | 14 | 267 | 853 | 120 | 120 | 120 | 68 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c4_vs_gpu_resident_mtp_c8 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 4 | 8 | 1 | 2 | e2e_ratio_gpu_resident_over_hisparse |  | 0.318269 | 0.318269 | 379 | 957 | 8 | 14 | 267 | 853 | 120 | 120 | 120 | 68 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c4 versus 2 GPU-resident MTP decode workers at c8; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | ttft_median_ms | 228708 | 22688.7 | 0.0992037 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | itl_weighted_ms | 30.754 | 10.9083 | 0.354696 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | weighted_decode_tps | 32.5161 | 91.6733 | 2.81932 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | wall_output_tps | 23.5666 | 236.913 | 10.0529 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | run_level_unpaired_observed_system_difference | 8 | 16 | 1 | 2 | output_tokens_total | 84618 | 859611 | 10.1587 | 219 | 969 | 11 | 24 | 167 | 853 |  |  |  |  |  | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 8 | 16 | 1 | 2 | ttft_ratio_gpu_resident_over_hisparse |  | 0.110806 | 0.110806 | 219 | 969 | 11 | 24 | 167 | 853 | 54 | 54 | 54 | 35 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 8 | 16 | 1 | 2 | itl_ratio_gpu_resident_over_hisparse |  | 0.355862 | 0.355862 | 219 | 969 | 11 | 24 | 167 | 853 | 54 | 54 | 54 | 35 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+| approximate_worker_normalized_hisparse_c8_vs_gpu_resident_mtp_c16 | approximate_worker_normalized_observed_system_ratio | source_key_matched_median_observed_system_ratio | 8 | 16 | 1 | 2 | e2e_ratio_gpu_resident_over_hisparse |  | 0.114997 | 0.114997 | 219 | 969 | 11 | 24 | 167 | 853 | 54 | 54 | 54 | 35 | source_trace_id+source_outer_idx+source_inner_idx | 1 HiSparse decode worker at c8 versus 2 GPU-resident MTP decode workers at c16; concurrency ratio is architectural context, not a demonstrated per-worker load match | Approximate worker-normalized mixed-workload comparison only: public HiSparse uses 1 decode worker and GPU-resident MTP uses 2 decode workers. This does not establish equal routing or active concurrency per worker; observed worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, GPU-count, KV-mode/dtype, MTP, and software differences remain confounded. |
+
+- **Inference:** these rows align one HiSparse decode worker with two GPU-resident MTP decode workers only as an architectural context. Routing and active load are not proven equal, and every other system difference remains confounded.
+
 
 ## User 2GPU Contextual Comparison
 

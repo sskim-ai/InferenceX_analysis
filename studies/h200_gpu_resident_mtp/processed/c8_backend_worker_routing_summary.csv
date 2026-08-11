@@ -1,0 +1,5 @@
+component,worker_id,request_count,percentage_of_profiled_requests,root_id_count,max_selected_http_interval_overlap,time_weighted_mean_selected_http_interval_overlap,routing_join_status,scope_note,classification
+prefill,7587896730349792787,476,0.49738766980146293,14,8,2.13794748928745,exact x_request_id -> frontend completion,Dynamo selected-worker routing. Interval overlap is not backend scheduler running or GPU affinity.,Evidence
+prefill,7587896730349792789,481,0.5026123301985371,14,8,1.874643663382604,exact x_request_id -> frontend completion,Dynamo selected-worker routing. Interval overlap is not backend scheduler running or GPU affinity.,Evidence
+decode,7587896730349792792,487,0.5088819226750261,14,7,2.2367867542302204,exact x_request_id -> frontend completion,Dynamo selected-worker routing. Interval overlap is not backend scheduler running or GPU affinity.,Evidence
+decode,7587896730349792795,470,0.49111807732497387,14,7,1.744983255301102,exact x_request_id -> frontend completion,Dynamo selected-worker routing. Interval overlap is not backend scheduler running or GPU affinity.,Evidence

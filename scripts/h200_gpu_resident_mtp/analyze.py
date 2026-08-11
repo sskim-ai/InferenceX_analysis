@@ -35,6 +35,7 @@ from h200_agentx_analysis.mtp_study import (  # noqa: E402
     add_requested_id_coverage,
     add_source_metadata_join,
     build_pair_table,
+    decode_tps_comparison_status,
     extract_mtp_profile_record,
     profile_filter,
     requested_id_resolution,
@@ -426,6 +427,9 @@ def _write_processed_tables(
     _system_comparison(system_pairs, profiled, hisparse_profiled).to_csv(
         processed / "h200_c8_hisparse_vs_gpu_resident.csv", index=False
     )
+    _worker_normalized_comparisons(profiled, hisparse_profiled).to_csv(
+        processed / "h200_worker_normalized_comparisons.csv", index=False
+    )
     _pair_summary(system_pairs, by_root=True).to_csv(processed / "exact_match_c8_summary.csv", index=False)
     _review_pairs(system_pairs).to_csv(processed / "c8_exact_matched_requests_review.csv", index=False)
     _top_ids(profiled).to_csv(processed / "top_ids_by_workload_or_latency.csv", index=False)
@@ -760,6 +764,9 @@ def _write_requested_id_tables(
                     "error_count": int(_truthy_count(all_group.get("error_present"))),
                     "cancellation_count": int(_truthy_count(all_group.get("was_cancelled"))),
                     "sample_quality": "sparse" if len(profile_group) < 3 else "observed",
+                    "decode_tps_comparison_status": decode_tps_comparison_status(
+                        metrics.get("itl_sample_count")
+                    ),
                 }
             )
             rows.append(metrics)
@@ -804,21 +811,53 @@ def _cross_concurrency_pairs(profiled: pd.DataFrame) -> pd.DataFrame:
 
 
 def _hisparse_c8_pairs(profiled: pd.DataFrame, hisparse: pd.DataFrame) -> pd.DataFrame:
-    if hisparse.empty:
-        return pd.DataFrame()
-    new = profiled.loc[pd.to_numeric(profiled.get("concurrency"), errors="coerce") == 8].copy()
-    old = hisparse.loc[pd.to_numeric(hisparse.get("concurrency"), errors="coerce") == 8].copy()
-    old = _add_source_key(old)
-    new = _add_source_key(new)
-    new["comparison_group"] = "gpu_resident_mtp_c8"
-    old["comparison_group"] = "hisparse_c8"
-    pairs = build_pair_table(
-        pd.concat([old, new], ignore_index=True, sort=False),
-        systems=("hisparse_c8", "gpu_resident_mtp_c8"),
+    pairs = _system_pairs_for_concurrency(
+        profiled,
+        hisparse,
+        hisparse_concurrency=8,
+        gpu_resident_concurrency=8,
     )
     if not pairs.empty:
         pairs["comparison_kind"] = "observed_system_ratio"
     return pairs
+
+
+def _system_pairs_for_concurrency(
+    profiled: pd.DataFrame,
+    hisparse: pd.DataFrame,
+    *,
+    hisparse_concurrency: int,
+    gpu_resident_concurrency: int,
+) -> pd.DataFrame:
+    """Return source-key pairs for a named public-system concurrency pair.
+
+    The common helper keeps the original c8-v-c8 comparison and the two
+    worker-normalized auxiliary comparisons on the same matching contract.
+    It does *not* claim that the scheduler sends an equal share of requests to
+    each worker; ``worker_id`` remains request metadata rather than GPU
+    affinity evidence.
+    """
+
+    if hisparse.empty or profiled.empty:
+        return pd.DataFrame()
+    new = profiled.loc[
+        pd.to_numeric(profiled.get("concurrency"), errors="coerce") == gpu_resident_concurrency
+    ].copy()
+    old = hisparse.loc[
+        pd.to_numeric(hisparse.get("concurrency"), errors="coerce") == hisparse_concurrency
+    ].copy()
+    if new.empty or old.empty:
+        return pd.DataFrame()
+    old_name = f"hisparse_c{hisparse_concurrency}"
+    new_name = f"gpu_resident_mtp_c{gpu_resident_concurrency}"
+    old = _add_source_key(old)
+    new = _add_source_key(new)
+    old["comparison_group"] = old_name
+    new["comparison_group"] = new_name
+    return build_pair_table(
+        pd.concat([old, new], ignore_index=True, sort=False),
+        systems=(old_name, new_name),
+    )
 
 
 def _add_source_key(frame: pd.DataFrame) -> pd.DataFrame:
@@ -888,7 +927,11 @@ def _system_comparison(
                 "hisparse_c8_value": old_value,
                 "gpu_resident_mtp_c8_value": new_value,
                 "gpu_resident_over_hisparse_ratio": _ratio(_number(new_value), _number(old_value)),
-                "sample_count": min(old_summary["profiled_request_count"], new_summary["profiled_request_count"]),
+                "hisparse_request_count": old_summary["profiled_request_count"],
+                "gpu_resident_request_count": new_summary["profiled_request_count"],
+                "exact_matched_source_key_count": None,
+                "strict_ttft_count": None,
+                "strict_decode_count": None,
                 "caveat": "16→32 GPUs, 1P1D→2P2D, KV mode/dtype, MTP, and software may differ; not a causal HiSparse estimate.",
             }
         )
@@ -907,13 +950,173 @@ def _system_comparison(
                         "gpu_resident_over_hisparse_ratio": item.get(
                             f"median_{metric}_ratio_right_over_left"
                         ),
-                        "sample_count": item.get(
-                            "strict_decode_count" if metric == "itl" else "strict_ttft_count"
-                        ),
+                        "hisparse_request_count": int(pairs["left_record_count"].sum()),
+                        "gpu_resident_request_count": int(pairs["right_record_count"].sum()),
+                        "exact_matched_source_key_count": item.get("matched_source_key_count"),
+                        "strict_ttft_count": item.get("strict_ttft_count"),
+                        "strict_decode_count": item.get("strict_decode_count"),
                         "caveat": "Source-key matching controls workload identity only; it does not isolate a single architecture change.",
                     }
                 )
     return pd.DataFrame(rows)
+
+
+def _worker_normalized_comparisons(
+    profiled: pd.DataFrame, hisparse: pd.DataFrame
+) -> pd.DataFrame:
+    """Build auxiliary 1-decode-worker vs 2-decode-worker comparisons.
+
+    These are deliberately labelled as *approximate worker-normalized*
+    comparisons.  They provide an additional mixed-workload reference when
+    the public systems use different numbers of decode workers, but do not
+    establish equal routing, equal active concurrency per worker, or a causal
+    effect of any one system setting.
+    """
+
+    rows: list[dict[str, Any]] = []
+    for hisparse_concurrency, gpu_resident_concurrency in ((4, 8), (8, 16)):
+        rows.extend(
+            _worker_normalized_comparison_rows(
+                profiled,
+                hisparse,
+                hisparse_concurrency=hisparse_concurrency,
+                gpu_resident_concurrency=gpu_resident_concurrency,
+            )
+        )
+    columns = [
+        "comparison_label",
+        "comparison_kind",
+        "comparison_scope",
+        "hisparse_concurrency",
+        "gpu_resident_mtp_concurrency",
+        "hisparse_decode_worker_count",
+        "gpu_resident_mtp_decode_worker_count",
+        "metric",
+        "hisparse_value",
+        "gpu_resident_mtp_value",
+        "gpu_resident_over_hisparse_ratio",
+        "hisparse_request_count",
+        "gpu_resident_request_count",
+        "hisparse_root_id_count",
+        "gpu_resident_root_id_count",
+        "hisparse_itl_sample_count",
+        "gpu_resident_itl_sample_count",
+        "exact_matched_source_key_count",
+        "same_output_length_count",
+        "strict_ttft_count",
+        "strict_decode_count",
+        "matching_method",
+        "worker_normalization_basis",
+        "caveat",
+    ]
+    return pd.DataFrame(rows, columns=columns)
+
+
+def _worker_normalized_comparison_rows(
+    profiled: pd.DataFrame,
+    hisparse: pd.DataFrame,
+    *,
+    hisparse_concurrency: int,
+    gpu_resident_concurrency: int,
+) -> list[dict[str, Any]]:
+    """Summarize one named approximate worker-normalized comparison pair."""
+
+    old = hisparse.loc[
+        pd.to_numeric(hisparse.get("concurrency"), errors="coerce") == hisparse_concurrency
+    ]
+    new = profiled.loc[
+        pd.to_numeric(profiled.get("concurrency"), errors="coerce") == gpu_resident_concurrency
+    ]
+    old_summary = summarize_requests(old)
+    new_summary = summarize_requests(new)
+    label = (
+        f"approximate_worker_normalized_hisparse_c{hisparse_concurrency}"
+        f"_vs_gpu_resident_mtp_c{gpu_resident_concurrency}"
+    )
+    caveat = (
+        "Approximate worker-normalized mixed-workload comparison only: public HiSparse "
+        "uses 1 decode worker and GPU-resident MTP uses 2 decode workers. "
+        "This does not establish equal routing or active concurrency per worker; observed "
+        "worker_id is request metadata, not backend GPU-affinity evidence. Other architecture, "
+        "GPU-count, KV-mode/dtype, MTP, and software differences remain confounded."
+    )
+    basis = (
+        f"1 HiSparse decode worker at c{hisparse_concurrency} versus 2 GPU-resident MTP "
+        f"decode workers at c{gpu_resident_concurrency}; concurrency ratio is architectural "
+        "context, not a demonstrated per-worker load match"
+    )
+    common = {
+        "comparison_label": label,
+        "comparison_kind": "approximate_worker_normalized_observed_system_ratio",
+        "hisparse_concurrency": hisparse_concurrency,
+        "gpu_resident_mtp_concurrency": gpu_resident_concurrency,
+        "hisparse_decode_worker_count": 1,
+        "gpu_resident_mtp_decode_worker_count": 2,
+        "hisparse_request_count": old_summary.get("profiled_request_count"),
+        "gpu_resident_request_count": new_summary.get("profiled_request_count"),
+        "hisparse_root_id_count": old_summary.get("root_id_count"),
+        "gpu_resident_root_id_count": new_summary.get("root_id_count"),
+        "hisparse_itl_sample_count": old_summary.get("itl_sample_count"),
+        "gpu_resident_itl_sample_count": new_summary.get("itl_sample_count"),
+        "worker_normalization_basis": basis,
+        "caveat": caveat,
+    }
+    rows: list[dict[str, Any]] = []
+    for metric in (
+        "ttft_median_ms",
+        "itl_weighted_ms",
+        "weighted_decode_tps",
+        "wall_output_tps",
+        "output_tokens_total",
+    ):
+        old_value = old_summary.get(metric)
+        new_value = new_summary.get(metric)
+        rows.append(
+            {
+                **common,
+                "comparison_scope": "run_level_unpaired_observed_system_difference",
+                "metric": metric,
+                "hisparse_value": old_value,
+                "gpu_resident_mtp_value": new_value,
+                "gpu_resident_over_hisparse_ratio": _ratio(
+                    _number(new_value), _number(old_value)
+                ),
+                "exact_matched_source_key_count": None,
+                "same_output_length_count": None,
+                "strict_ttft_count": None,
+                "strict_decode_count": None,
+                "matching_method": None,
+            }
+        )
+
+    pairs = _system_pairs_for_concurrency(
+        profiled,
+        hisparse,
+        hisparse_concurrency=hisparse_concurrency,
+        gpu_resident_concurrency=gpu_resident_concurrency,
+    )
+    if pairs.empty:
+        return rows
+    summary = _pair_summary(pairs)
+    for _, item in summary.iterrows():
+        for metric in ("ttft", "itl", "e2e"):
+            ratio = item.get(f"median_{metric}_ratio_right_over_left")
+            rows.append(
+                {
+                    **common,
+                    "comparison_scope": "source_key_matched_median_observed_system_ratio",
+                    "metric": f"{metric}_ratio_gpu_resident_over_hisparse",
+                    "hisparse_value": None,
+                    "gpu_resident_mtp_value": ratio,
+                    "gpu_resident_over_hisparse_ratio": ratio,
+                    "exact_matched_source_key_count": item.get("matched_source_key_count"),
+                    "same_output_length_count": item.get("same_output_length_count"),
+                    "strict_ttft_count": item.get("strict_ttft_count"),
+                    "strict_decode_count": item.get("strict_decode_count"),
+                    "matching_method": item.get("matching_method"),
+                }
+            )
+    return rows
 
 
 def _review_pairs(pairs: pd.DataFrame) -> pd.DataFrame:

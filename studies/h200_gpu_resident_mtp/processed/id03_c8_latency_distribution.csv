@@ -1,0 +1,28 @@
+summary_type,metric,bucket,quantile,value,sample_count,weighting,ttft_median_ms,ttft_p90_ms,weighted_itl_ms,weighted_decode_tps,output_tokens_total
+latency_quantile,ttft_ms,,P10,797.2307738,119,request-level quantile,,,,,
+latency_quantile,ttft_ms,,P25,938.1434135,119,request-level quantile,,,,,
+latency_quantile,ttft_ms,,P50,1080.569611,119,request-level quantile,,,,,
+latency_quantile,ttft_ms,,P75,1655.558172,119,request-level quantile,,,,,
+latency_quantile,ttft_ms,,P90,3326.1389562000004,119,request-level quantile,,,,,
+latency_quantile,ttft_ms,,P95,6497.038351999993,119,request-level quantile,,,,,
+latency_quantile,ttft_ms,,P99,37471.15121941985,119,request-level quantile,,,,,
+latency_quantile,itl_ms,,P10,10.462561560905243,119,request-level quantile,,,,,
+latency_quantile,itl_ms,,P25,10.635190837607347,119,request-level quantile,,,,,
+latency_quantile,itl_ms,,P50,10.897762362204725,119,request-level quantile,,,,,
+latency_quantile,itl_ms,,P75,11.808514887571427,119,request-level quantile,,,,,
+latency_quantile,itl_ms,,P90,12.34057079387755,119,request-level quantile,,,,,
+latency_quantile,itl_ms,,P95,13.642367870429654,119,request-level quantile,,,,,
+latency_quantile,itl_ms,,P99,15.869901111636363,119,request-level quantile,,,,,
+latency_quantile,e2e_ms,,P10,2449.803314,119,request-level quantile,,,,,
+latency_quantile,e2e_ms,,P25,2931.7694555,119,request-level quantile,,,,,
+latency_quantile,e2e_ms,,P50,3604.6599459999998,119,request-level quantile,,,,,
+latency_quantile,e2e_ms,,P75,5065.277461,119,request-level quantile,,,,,
+latency_quantile,e2e_ms,,P90,8113.727795400004,119,request-level quantile,,,,,
+latency_quantile,e2e_ms,,P95,18720.847709499976,119,request-level quantile,,,,,
+latency_quantile,e2e_ms,,P99,46319.75757591998,119,request-level quantile,,,,,
+output_length_bucket,mixed_latency_and_decode,1,,,0,ITL is output-transition-token weighted within bucket,,,,,
+output_length_bucket,mixed_latency_and_decode,2-32,,,1,ITL is output-transition-token weighted within bucket,6376.332963,6376.332963,34.257912999999995,29.19033625895425,2.0
+output_length_bucket,mixed_latency_and_decode,33-128,,,21,ITL is output-transition-token weighted within bucket,1505.406914,3306.623982,11.846296464642084,84.41456812977147,2326.0
+output_length_bucket,mixed_latency_and_decode,129-512,,,90,ITL is output-transition-token weighted within bucket,1036.3793299999998,3021.4254393000033,11.182773220933617,89.4232566683949,20698.0
+output_length_bucket,mixed_latency_and_decode,513-2048,,,4,ITL is output-transition-token weighted within bucket,1510.646395,2115.9006584,11.133995395235516,89.81501828426498,3698.0
+output_length_bucket,mixed_latency_and_decode,>2048,,,3,ITL is output-transition-token weighted within bucket,869.967641,1098.210257,10.618529596809681,94.17499766638578,10911.0
