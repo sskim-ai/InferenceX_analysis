@@ -303,7 +303,7 @@
 
 ### Unknown
 
-- Global scheduler saturation is unknown: rank-series counters cannot be summed into a worker/cluster total, and no saturation fraction is exported.
+- Global scheduler saturation is unknown. Rank-series counters require topology/ownership validation; the later worker/cluster reconstruction validates decode DP-shard aggregation only, while prefill and unique P/D global totals remain Unknown.
 - A complete per-request H200 queue time is unavailable. The package has aggregate SGLang queue-time evidence and a limited set of exact Dynamo router long-wait checkpoints, but no request-correlated accepted→queued→running→first-token lifecycle. TTFT cannot be decomposed into queueing versus execution from these data alone.
 - Selected Dynamo worker routing is not backend GPU affinity; no per-request prefill/decode scheduler-pressure join is established.
 
@@ -322,6 +322,100 @@
 11. `studies/h200_gpu_resident_mtp/processed/c8_decode_scheduler_summary.csv`
 12. `studies/h200_gpu_resident_mtp/processed/c8_backend_worker_routing_summary.csv`
 13. `studies/h200_gpu_resident_mtp/processed/c8_router_queue_wait_checkpoint_summary.csv`
+
+
+## c8 Worker/Cluster Scheduler Reconstruction
+
+### Evidence
+
+- **Prefill TP verdict:** TP8/ATTN_CP8 metrics are CP-rank local scheduler views. Raw series are highly synchronized but not perfectly identical; neither TP8 multiplication nor a unique-worker gauge is proven.
+- **Prefill rank envelopes:** running maxima are 5.0 and 4.0; these are pressure evidence, not unique worker request counts.
+- **Decode DP verdict:** TP8/DP8 DP-attention exposes independent rank-local scheduler shards. Exact source semantics plus complete raw grids validate summing ranks within a decode worker.
+- **Decode cluster:** exact endpoint-interval intersection gives running max=17.0, P90=10.0 (Validated reconstruction); generic `sglang:num_queue_reqs` is zero in every observed decode DP-rank sample.
+- **Dynamo cross-check:** component inflight is correlated with but not equal to SGLang running; frontend/request-plane counters remain separate layers.
+
+| metric | value | status | scope | notes |
+| --- | --- | --- | --- | --- |
+| http_max_inflight | 11 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_time_weighted_mean | 3.968259088179123 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_p90 | 7.0 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_p95 | 8.0 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| prefill_worker_0_max_running | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_0_rank_envelope_max_running | 5.0 | Strong inference | rank-envelope running requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_0_max_waiting | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_0_rank_envelope_max_waiting | 5.0 | Strong inference | rank-envelope queue requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_1_max_running | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_1_rank_envelope_max_running | 4.0 | Strong inference | rank-envelope running requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_1_max_waiting | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_1_rank_envelope_max_waiting | 5.0 | Strong inference | rank-envelope queue requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_cluster_max_running | Unknown | Unknown | two prefill workers' unique logical request union | Do not sum TP ranks or strong-inference rank envelopes across workers. |
+| prefill_cluster_p50_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p90_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p95_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_max_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Do not sum TP ranks or strong-inference rank envelopes across workers. |
+| prefill_cluster_p50_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p90_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p95_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_waiting_positive_fraction | Unknown | Unknown | two prefill workers' unique logical request union | Rank-local positive queue evidence exists but cluster positive fraction is not reconstructable. |
+| decode_worker_0_max_running | 9.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_0_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_1_max_running | 10.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_1_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_cluster_max_running | 17.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_p50_running | 4.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_p90_running | 10.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_p95_running | 12.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_max_waiting | 0.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+
+- Table is truncated to 30 rows.
+
+| component | worker_id | metric | timeslice_sample_count | rank_envelope_max_of_min | rank_envelope_p50_of_median | rank_envelope_p90_of_median | rank_envelope_p95_of_median | rank_envelope_max | unique_worker_value | status | rank_semantics_verdict | reconstruction_method | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| prefill | 694d9fdfb4d8ee13 | rank-envelope running requests | 3615 | 4 | 0 | 1 | 1 | 4 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee13 | rank-envelope waiting/queue requests | 3615 | 5 | 0 | 0 | 1 | 5 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee13 | rank-envelope prefill bootstrap queue | 3615 | 5 | 0 | 1 | 1 | 5 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee13 | rank-envelope prefill inflight queue | 3615 | 3 | 0 | 1 | 1 | 3 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee15 | rank-envelope running requests | 3622 | 5 | 0 | 1 | 1 | 5 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee15 | rank-envelope waiting/queue requests | 3622 | 5 | 0 | 0 | 1 | 5 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee15 | rank-envelope prefill bootstrap queue | 3622 | 2 | 0 | 1 | 1 | 2 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+| prefill | 694d9fdfb4d8ee15 | rank-envelope prefill inflight queue | 3622 | 4 | 0 | 1 | 1 | 4 | Unknown | Strong inference | unresolved | TP/CP rank envelope (min/median/max); no rank sum or worker unique union | Do not read rank_envelope_max as a validated logical worker request count. |
+
+| component | worker_id | metric | timeslice_sample_count | max | p50 | p90 | p95 | positive_fraction | status | reconstruction_method | notes | dp_semantics | decode_waiting_all_zero_raw_rank_series |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| decode | 694d9fdfb4d8ee18 | running_requests | 3607 | 10 | 2 | 7 | 8 | 0.747436 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee18 | waiting_requests | 3607 | 0 | 0 | 0 | 0 | 0 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) | True |
+| decode | 694d9fdfb4d8ee18 | decode_prealloc_queue_requests | 3607 | 4 | 0 | 2 | 3 | 0.207929 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee18 | decode_transfer_queue_requests | 3607 | 2 | 0 | 0 | 1 | 0.0629332 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee1b | running_requests | 3624 | 9 | 1 | 7 | 8 | 0.665287 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee1b | waiting_requests | 3624 | 0 | 0 | 0 | 0 | 0 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) | True |
+| decode | 694d9fdfb4d8ee1b | decode_prealloc_queue_requests | 3624 | 4 | 0 | 1 | 1 | 0.143488 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+| decode | 694d9fdfb4d8ee1b | decode_transfer_queue_requests | 3624 | 3 | 0 | 0 | 1 | 0.0706402 | Validated reconstruction | sum of validated independent rank-local scheduler shards | Raw one-second exporter samples; no null-to-zero conversion. DP rank sum requires complete raw 8-rank grids. | validated independent scheduler shards (TP8/DP8/DP attention) |  |
+
+| component | metric | worker_a | worker_b | overlap_segment_count | common_worker_overlap_s | common_worker_overlap_fraction_of_profile | max | time_weighted_mean | p50 | p75 | p90 | p95 | p99 | positive_fraction | status | reconstruction_method | decode_waiting_all_zero_raw_rank_series | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| decode | running_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 17 | 5.14057 | 4 | 8 | 10 | 12 | 15 | 0.917739 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. |
+| decode | waiting_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections | True | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. |
+| decode | decode_prealloc_queue_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 5 | 0.541441 | 0 | 1 | 2 | 3 | 4 | 0.325967 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. |
+| decode | decode_transfer_queue_requests | 694d9fdfb4d8ee1b | 694d9fdfb4d8ee18 | 7185 | 3592.85 | 0.987046 | 4 | 0.143479 | 0 | 0 | 1 | 1 | 2 | 0.123454 | Validated reconstruction | sum of validated worker scheduler counts over exact endpoint interval intersections |  | sum of validated worker scheduler counts over exact endpoint interval intersections; DP rank sums are valid only because source topology and complete grids are both verified. |
+
+### Unknown
+
+- Prefill worker/cluster **unique** running and waiting remain Unknown: no CP-rank request-ID union is exported.
+- Prefill + decode cannot become unique system-global running: request-correlated P/D handoff and cross-stage deduplication are absent.
+- Decode `num_queue_reqs=0` is the named generic queue only, not a statement that PD prealloc/transfer queues are zero.
+
+### Files ChatGPT should read next
+
+1. `studies/h200_gpu_resident_mtp/reports/15_c8_scheduler_worker_cluster_reconstruction.md`
+2. `studies/h200_gpu_resident_mtp/processed/c8_cluster_scheduler_reconstruction.csv`
+3. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_rank_semantics_validation.csv`
+4. `studies/h200_gpu_resident_mtp/processed/c8_prefill_worker_scheduler_summary.csv`
+5. `studies/h200_gpu_resident_mtp/processed/c8_prefill_cluster_scheduler_summary.csv`
+6. `studies/h200_gpu_resident_mtp/processed/c8_decode_rank_scheduler_summary.csv`
+7. `studies/h200_gpu_resident_mtp/processed/c8_decode_worker_scheduler_summary.csv`
+8. `studies/h200_gpu_resident_mtp/processed/c8_decode_cluster_scheduler_summary.csv`
+9. `studies/h200_gpu_resident_mtp/processed/c8_dynamo_sglang_concurrency_crosscheck.csv`
+10. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_source_semantics.csv`
 
 
 - **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` only as a raw profile counter; `raw_profile_cache_counter_tps` is not a validated logical-prompt or physical-KV metric.

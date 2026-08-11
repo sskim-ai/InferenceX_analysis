@@ -24,7 +24,7 @@ Local 값은 사용자가 제공한 export-safe 요약값만 기록하며, 사�
 
 > 기본 표기는 `Local conc1 | Local conc8 | InferX 결과` 순서로 통일한다.
 >
-> **중요:** InferX의 `HTTP P90=7`, `prefill running max=5`, `decode running max=2`는 서로 다른 metric/scope다. **`5+2=7`로 합산하거나 “InferX가 실제로 7개만 동시에 실행했다”고 해석하면 안 된다.** Public export로 확인 가능한 cluster-global scheduler running/waiting 총합은 **Unknown**이다.
+> **중요:** InferX의 `HTTP P90=7`, prefill TP/CP rank envelope, decode DP-shard cluster running은 서로 다른 metric/scope다. Decode-stage cluster는 max **17**, P90 **10**으로 재구성됐지만, prefill unique union과 P/D 전체 unique global running/waiting 총합은 여전히 **Unknown**이다.
 
 ## 1.1 환경 및 성능
 
@@ -68,12 +68,12 @@ Local 값은 사용자가 제공한 export-safe 요약값만 기록하며, 사�
 | HTTP in-flight time-weighted mean | 미산출 | 미산출 | **3.97** | InferX 전체 c8 957 profile request 기준 |
 | HTTP in-flight P90 | 미산출 | 미산출 | **7** | **running=7이라는 뜻이 아님.** 시간의 90%에서 HTTP in-flight ≤7이라는 뜻 |
 | HTTP in-flight P95 | 미산출 | 미산출 | **8** | scheduler running 수와 다른 metric |
-| **Scheduler running — global/cluster total** | **max 4** | **max 7** | **Unknown** | Local은 global 관측. InferX public export는 cluster-global 총합을 제공하지 않음 |
-| InferX prefill running reference | N/A | N/A | rank-series max **5** | prefill endpoint/rank-series 값. cluster total 아님 |
-| InferX decode running reference | N/A | N/A | rank-series max **2** | decode endpoint/rank-series 값. cluster total 아님 |
-| **Scheduler waiting — global/cluster total** | **max 1** | **max 25** | **Unknown** | Local은 global 관측. InferX public export는 cluster-global 총합을 제공하지 않음 |
-| InferX prefill waiting reference | N/A | N/A | rank-series P50=0, P90=0, P95≈1, max **5** | cluster-global waiting=5라는 뜻이 아님 |
-| InferX decode waiting reference | N/A | N/A | rank-series **0** | decode endpoint/rank-series에서 waiting=0 관측 |
+| **Scheduler running — global/cluster total** | **max 4** | **max 7** | **unique P/D global Unknown** | Local은 global 관측. InferX는 decode-stage cluster만 재구성 가능하고 P/D unique global total은 Unknown |
+| InferX prefill running reference | N/A | N/A | unique worker/cluster **Unknown**; TP/CP rank-envelope max **5/4** | rank envelope은 pressure evidence이며 worker logical request union이 아님 |
+| InferX decode running reference | N/A | N/A | validated decode workers max **9/10**; cluster max **17**, P90 **10** | TP8/DP8 DP-shard sum, exact endpoint-interval overlap; P/D global total 아님 |
+| **Scheduler waiting — global/cluster total** | **max 1** | **max 25** | **unique P/D global Unknown** | Local은 global 관측. InferX generic decode queue cluster만 0으로 재구성됨 |
+| InferX prefill waiting reference | N/A | N/A | unique worker/cluster **Unknown**; TP/CP rank-envelope max **5/5** | cluster-global waiting=5라는 뜻이 아님 |
+| InferX decode waiting reference | N/A | N/A | generic `num_queue_reqs` cluster **0** | PD-specific prealloc/transfer queue와 동일 metric이 아님 |
 | Waiting-positive behavior | 0.29% of 1s bins | **93.0% of 1s bins** | 동일한 cluster-global metric 없음 | Local conc8은 persistent backlog가 직접 관측됨 |
 
 ### 이 표에서 가장 중요한 해석
@@ -82,18 +82,18 @@ Local 값은 사용자가 제공한 export-safe 요약값만 기록하며, 사�
 InferX HTTP P90 = 7
 ≠ InferX scheduler running = 7
 
-InferX prefill running max = 5
-+ InferX decode running max = 2
-≠ InferX global running = 7
+InferX prefill rank-envelope max = 5/4
++ InferX decode-stage cluster max = 17
+≠ InferX P/D unique global running
 ```
 
 이유는 다음과 같다.
 
 - `HTTP in-flight`는 frontend/request-plane interval overlap이다.
 - `num_running_reqs`는 SGLang scheduler metric이다.
-- InferX의 prefill/decode 값은 서로 다른 endpoint/rank-series에서 관측된 값이다.
-- Public export는 각 rank-series를 합산해서 cluster-global running/waiting 총합으로 해석할 근거를 제공하지 않는다.
-- 따라서 **InferX에서 실제로 동시에 GPU service를 받고 있던 request 총수는 현재 Unknown**으로 남겨야 한다.
+- Prefill TP8/ATTN_CP8 값은 CP-rank local view이므로 worker/cluster unique count로 합산하지 않는다.
+- Decode TP8/DP8 값은 source ownership과 complete raw DP grid를 검증해 decode worker/cluster stage occupancy로만 합산했다.
+- 따라서 **InferX에서 P/D 전체의 unique request 총수는 현재 Unknown**으로 남겨야 한다. Decode-stage max 17은 global GPU service total이 아니다.
 
 ---
 
@@ -111,9 +111,9 @@ InferX prefill running max = 5
 | Context limit | 202,752 | 202,752 | 1,048,576 |
 | 실제 c8 workload | 해당 없음 | 동일 ID03 8-copy | mixed-root AgentX c8 |
 | 실제 HTTP peak | 4 | 29 | 11 |
-| Cluster-global scheduler running | max 4 | max 7 | **Unknown** |
-| Cluster-global scheduler waiting | max 1 | max 25 | **Unknown** |
-| Queue regime | 거의 queue-free | deep saturation | 대체로 low-waiting/headroom으로 관측되나 global total은 Unknown |
+| Cluster-global scheduler running | max 4 | max 7 | **P/D unique global Unknown**; decode-stage cluster max 17 / P90 10 |
+| Cluster-global scheduler waiting | max 1 | max 25 | **P/D unique global Unknown**; generic decode queue cluster 0 |
+| Queue regime | 거의 queue-free | deep saturation | generic decode queue=0이나 P/D global queue regime은 Unknown |
 
 따라서 `Local conc8`과 `InferX c8`은 이름만 c8이 같고 실제 backend pressure는 동일하지 않다.
 
@@ -124,9 +124,9 @@ InferX prefill running max = 5
 | Metric | Local conc1 | Local conc8 | InferX 결과 |
 | --- | ---: | ---: | ---: |
 | HTTP in-flight max | 4 | **29** | **11** |
-| Cluster-global scheduler running max | 4 | **7** | **Unknown** |
-| Cluster-global scheduler waiting max | 1 | **25** | **Unknown** |
-| InferX scheduler 참고값 | N/A | N/A | prefill rank-series running≤5 / waiting≤5; decode running≤2 / waiting=0 |
+| Cluster-global scheduler running max | 4 | **7** | **P/D unique global Unknown**; decode-stage cluster max **17** |
+| Cluster-global scheduler waiting max | 1 | **25** | **P/D unique global Unknown**; generic decode queue cluster **0** |
+| InferX scheduler 참고값 | N/A | N/A | prefill rank-envelope running≤5/4, waiting≤5/5; decode workers max 9/10, cluster P90 10 |
 | Waiting-positive | 0.29% | **93.0%** | 동일 scope global metric 없음; prefill rank-series P90 waiting=0 |
 | TTFT median | 0.563 s | **26.682 s** | 1.081 s |
 | Queue median | 0.012 s | **24.385 s** | typical prefill queue histogram median ≈2–3 ms* |
@@ -218,7 +218,7 @@ Local conc1과 InferX c8는 둘 다 typical persistent queue가 거의 없는 op
 | Approx. Local conc8 proxy / InferX TTFT | N/A | **1.68×** | reference 1.0× |
 | Weighted decode TPS | 93.05 | 61.71 | 90.45 |
 
-\* InferX 1.081초는 queue-adjusted 값이 아니라 observed median TTFT다. 다만 prefill queue histogram median은 약 2–3ms이고 decode waiting rank-series는 0으로, typical queue pressure는 Local conc8보다 매우 작다.
+\* InferX 1.081초는 queue-adjusted 값이 아니라 observed median TTFT다. Prefill queue histogram median은 약 2–3ms이고 generic decode queue는 0이지만, 이는 P/D global queue-time decomposition이나 global queue pressure 결론이 아니다.
 
 ## 5.3 Raw deployment-level view
 
@@ -227,9 +227,9 @@ Local conc1과 InferX c8는 둘 다 typical persistent queue가 거의 없는 op
 | Raw TTFT median | 0.563 s | **26.682 s** | **1.081 s** |
 | Weighted decode TPS | 93.05 | **61.71** | **90.45** |
 | HTTP peak | 4 | **29** | **11** |
-| Global scheduler running | max 4 | max 7 | **Unknown** |
-| Global scheduler waiting | max 1 | max 25 | **Unknown** |
-| Waiting regime | 거의 없음 | **persistent/deep saturation** | **mostly low-waiting based on rank-series evidence; global total Unknown** |
+| Global scheduler running | max 4 | max 7 | **P/D unique global Unknown**; decode-stage cluster max 17 |
+| Global scheduler waiting | max 1 | max 25 | **P/D unique global Unknown**; generic decode queue cluster 0 |
+| Waiting regime | 거의 없음 | **persistent/deep saturation** | generic decode queue=0; P/D global waiting regime Unknown |
 
 ---
 
@@ -281,8 +281,8 @@ InferX는 GPU-resident KV이므로 물리적인 external load/store counter를 L
 1. **Local conc1은 low-contention baseline**이다. TTFT 0.563초, queue 0.012초, decode TPS 93.05 tok/s다.
 2. **Local conc8은 deep saturation**이다. TTFT 26.682초 중 queue median이 24.385초이며, HTTP peak 29, global max waiting 25가 관측됐다.
 3. **InferX c8은 Local conc8과 같은 c8 부하가 아니다.** HTTP max 11, time-weighted mean 3.97, P90 7, P95 8이다.
-4. **InferX의 실제 cluster-global scheduler running/waiting request 수는 Unknown이다.** `HTTP P90=7`은 running 7을 뜻하지 않으며, `prefill max 5 + decode max 2`도 global running 7로 합산할 수 없다.
-5. Public rank-series에서는 prefill waiting이 대부분 0(P90=0), decode waiting이 0으로 관측되어 **persistent waiting이 낮은 operating regime**이라는 질적 해석은 가능하다.
+4. **InferX의 P/D unique global scheduler running/waiting request 수는 Unknown이다.** `HTTP P90=7`은 running 7을 뜻하지 않는다. Decode DP-shard cluster running은 max 17/P90 10으로 재구성했지만, prefill CP-rank unique union 및 P/D handoff deduplication이 없어 global total로 합산하지 않는다.
+5. Public generic decode `num_queue_reqs`는 0으로 관측됐지만, prefill unique queue union 및 PD-specific decode prealloc/transfer queues는 별도 scope다. 따라서 **global persistent waiting이 낮다**고 확정하지 않는다.
 6. **Local conc8 raw TTFT가 InferX보다 매우 길지만 decode TPS 차이는 훨씬 작다.** 따라서 TTFT 격차의 상당 부분은 Local scheduler/admission backlog로 설명된다.
 7. **Local conc1과 InferX는 decode TPS가 같은 order**다: 93.05 vs 90.45 tok/s. 이는 low-contention behavior 비교이며 hardware efficiency 비교가 아니다.
 8. **Local conc8에서 queue만 제외한 service-side proxy는 약 1.812초**로 InferX observed TTFT 1.081초와 같은 1초대 order다.
@@ -291,15 +291,15 @@ InferX는 GPU-resident KV이므로 물리적인 external load/store counter를 L
 
 가장 안전한 최종 표현은 다음과 같다.
 
-> Local 2×H200 Aggregated 서버는 low-contention 상태에서는 빠른 service rate를 보이지만, 동일 ID03 workload에서 concurrency가 증가하면 scheduler/KV pressure가 빠르게 포화된다. Local conc8의 매우 큰 TTFT는 active inference 성능 저하만으로 설명되지 않으며 persistent queue backlog가 지배적이다. Public InferenceX c8은 동일 root-concurrency label을 사용하지만 실제 request-plane load가 훨씬 낮다. Public export에서는 cluster-global running/waiting request 총수를 직접 복원할 수 없으므로 Local의 global 7/25와 숫자 대 숫자로 비교하면 안 된다. 다만 rank-series evidence상 public system은 대부분 low-waiting regime에 머문다.
+> Local 2×H200 Aggregated 서버는 low-contention 상태에서는 빠른 service rate를 보이지만, 동일 ID03 workload에서 concurrency가 증가하면 scheduler/KV pressure가 빠르게 포화된다. Local conc8의 매우 큰 TTFT는 active inference 성능 저하만으로 설명되지 않으며 persistent queue backlog가 지배적이다. Public InferenceX c8은 동일 root-concurrency label을 사용하지만 실제 request-plane load가 훨씬 낮다. Public export에서는 P/D unique global running/waiting request 총수를 복원할 수 없으므로 Local의 global 7/25와 숫자 대 숫자로 비교하면 안 된다. Public decode-stage cluster occupancy는 검증됐지만 prefill unique union 및 cross-stage deduplication은 Unknown이다.
 
 ---
 
 # 9. 비교 시 금지할 해석
 
 - `InferX HTTP P90=7이므로 실제 running request도 7개다`
-- `InferX prefill running 5 + decode running 2 = global running 7`
-- `InferX prefill waiting max 5 = cluster-global waiting 5`
+- `InferX prefill rank-envelope 5/4 + decode cluster 17 = global running`
+- `InferX prefill TP/CP rank-envelope waiting max 5 = cluster-global waiting 5`
 - `2 GPU가 32 GPU보다 빠르다`
 - `Local c8와 InferX c8는 동일 offered load다`
 - `59/62 vs 90 tok/s 비율이 GPU 성능비다`

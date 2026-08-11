@@ -136,7 +136,7 @@
 | routing_exact_profile_join_count | 957 | Evidence | raw profile x_request_id -> frontend request-completed log | Dynamo worker routing only, not GPU affinity. |
 
 - HTTP in-flight는 957개 successful profiling request의 `[start, end)` interval overlap이며, SGLang running 수나 GPU sequence 수가 아니다. 동일 timestamp에서는 end를 start보다 먼저 처리했다.
-- server-metrics export에는 prefill/decode의 explicit rank-series `num_running_reqs` 및 `num_queue_reqs`가 있으나, rank 값을 worker/cluster 합계로 더하지 않았다.
+- server-metrics export에는 prefill/decode의 explicit rank-series `num_running_reqs` 및 `num_queue_reqs`가 있다. 이 summary의 초기 rank-series 표는 자동 합산하지 않았고, Report 15가 topology/ownership 검증 후 decode DP-shard 범위만 별도로 재구성한다.
 
 ## Inference
 
@@ -145,7 +145,59 @@
 
 ## Unknown
 
-- global scheduler saturation, worker/cluster total running request, request-level queue time, 그리고 GPU affinity는 공개 자료만으로 확정할 수 없다. Aggregate queue counter와 일부 Dynamo long-wait checkpoint는 존재하지만 TTFT를 queue/execution으로 분해하지 않는다. 상세은 reports/13_c8_concurrency_scheduler_reconstruction.md를 따른다.
+- global scheduler saturation, prefill unique-worker/cluster total 및 P/D unique global running, request-level queue time, 그리고 GPU affinity는 공개 자료만으로 확정할 수 없다. Aggregate queue counter와 일부 Dynamo long-wait checkpoint는 존재하지만 TTFT를 queue/execution으로 분해하지 않는다. 상세은 reports/13_c8_concurrency_scheduler_reconstruction.md를 따른다.
+
+# c8 SGLang worker / cluster scheduler 재구성
+
+## Evidence
+
+| metric | value | status | scope | notes |
+| --- | --- | --- | --- | --- |
+| http_max_inflight | 11 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_time_weighted_mean | 3.968259088179123 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_p90 | 7.0 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| http_p95 | 8.0 | Evidence | HTTP/client [request_start_ns, request_end_ns) profile overlap | Not an SGLang scheduler running-request count. |
+| prefill_worker_0_max_running | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_0_rank_envelope_max_running | 5.0 | Strong inference | rank-envelope running requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_0_max_waiting | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_0_rank_envelope_max_waiting | 5.0 | Strong inference | rank-envelope queue requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_1_max_running | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_1_rank_envelope_max_running | 4.0 | Strong inference | rank-envelope running requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_worker_1_max_waiting | Unknown | Unknown | unique logical requests at one CP8 prefill worker | The rank envelope is recorded separately; neither rank sum nor a unique worker count is proven. |
+| prefill_worker_1_rank_envelope_max_waiting | 5.0 | Strong inference | rank-envelope queue requests | Pressure evidence only, not a unique logical worker request count. |
+| prefill_cluster_max_running | Unknown | Unknown | two prefill workers' unique logical request union | Do not sum TP ranks or strong-inference rank envelopes across workers. |
+| prefill_cluster_p50_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p90_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p95_running | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_max_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Do not sum TP ranks or strong-inference rank envelopes across workers. |
+| prefill_cluster_p50_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p90_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_p95_waiting | Unknown | Unknown | two prefill workers' unique logical request union | Unknown is intentionally not converted to zero. |
+| prefill_cluster_waiting_positive_fraction | Unknown | Unknown | two prefill workers' unique logical request union | Rank-local positive queue evidence exists but cluster positive fraction is not reconstructable. |
+| decode_worker_0_max_running | 9.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_0_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_1_max_running | 10.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_worker_1_max_waiting | 0.0 | Validated reconstruction | one decode worker, sum of complete DP8 rank-local scheduler shards | A logical request is assigned to one DP shard under the validated source mapping. |
+| decode_cluster_max_running | 17.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_p50_running | 4.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_p90_running | 10.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_p95_running | 12.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+| decode_cluster_max_waiting | 0.0 | Validated reconstruction | two decode workers, sum only over exact overlapping raw endpoint intervals | This is decode-stage cluster occupancy, not P/D unique system-global running. |
+
+- Table is truncated to 30 rows.
+
+## Validated reconstruction
+
+- Decode TP8/DP8 DP-attention의 DP rank는 source controller와 raw complete rank grid로 independent scheduler shard임을 검증했다. 따라서 같은 decode worker 내 DP rank 합계와, 실제 endpoint interval overlap에서 계산한 decode cluster running은 해당 decode-stage scope에서만 합산 가능하다.
+- `sglang:num_queue_reqs`는 관측된 모든 decode DP rank sample에서 0이다. 이는 generic decode queue의 범위이며 PD-specific prealloc/transfer queue 전체가 0이라는 뜻은 아니다.
+
+## Strong inference
+
+- Prefill TP8/ATTN_CP8 rank series는 매우 동기화된 CP-rank local view다. rank envelope max는 pressure evidence로 보존하지만 8배 합산하지 않고 unique worker request count로 승격하지 않는다.
+
+## Unknown
+
+- Prefill worker/cluster unique running/waiting과 prefill+decode unique global running은 public metric만으로 Unknown이다. P/D handoff request deduplication evidence가 없으므로 stage maxima를 더하지 않는다. 상세은 reports/15_c8_scheduler_worker_cluster_reconstruction.md를 따른다.
 
 # Concurrency c8 / c12 / c16 비교
 

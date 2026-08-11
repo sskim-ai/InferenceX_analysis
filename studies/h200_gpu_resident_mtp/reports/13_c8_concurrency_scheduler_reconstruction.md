@@ -21,7 +21,7 @@
 
 - **AgentX root-trajectory lane concurrency:** c8 is the configured count of eight root trajectory lanes; it is a workload-generator setting.
 - **HTTP/client in-flight:** overlapping profile request intervals use `[start, end)` semantics. At an equal timestamp, end events are processed before start events; a start-context value includes all requests that start at that exact timestamp.
-- **SGLang scheduler running/waiting:** explicit `sglang:*` values are aggregate samples in endpoint/rank-export series. They are not summed across TP ranks into an unsupported worker or cluster total.
+- **SGLang scheduler running/waiting:** explicit `sglang:*` values are aggregate samples in endpoint/rank-export series. Prefill TP/CP counters are not summed into an unsupported worker or cluster total. A later source/topology validation permits a limited decode DP-shard reconstruction only; see Report 15.
 - **Configured limits:** prefill `max_running_requests=32` and decode `max_running_requests=200` are capacity settings, not measurements of runtime running requests.
 
 ### Unknown
@@ -170,16 +170,16 @@
 | decode | http://10.49.115.1:7503/metrics | 694d9fdfb4d8ee1b | sglang:queue_time_seconds | 8 |  |  |  | 0.000178409 | 0.000172711 | 0.000326799 | 0.000345477 |  |  | Histogram of queueing time in seconds. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | aggregate AIPerf histogram/export statistics; no usable gauge timeslice value for this metric | Evidence |
 | decode | http://10.49.62.108:7502/metrics | 694d9fdfb4d8ee18 | sglang:queue_time_seconds | 8 |  |  |  | 0.000196121 | 0.000185756 | 0.000366957 | 0.000389268 |  |  | Histogram of queueing time in seconds. | AIPerf public server-metrics profiling export; explicit SGLang metric; decode endpoint/rank-series scope. Values across rank exports are not summed into a worker or cluster count. | aggregate AIPerf histogram/export statistics; no usable gauge timeslice value for this metric | Evidence |
 
-- Explicit rank-export series show a maximum observed decode `num_running_reqs` of 2.0 and `num_queue_reqs` of 0.0; these are not summed across ranks.
+- This report's rank-series inventory shows a maximum observed decode `num_running_reqs` of 2.0 and `num_queue_reqs` of 0.0; those inventory maxima are not a worker total. Report 15 subsequently validates a DP-shard sum within a decode worker and over two decode endpoints, with scope guards.
 - `../processed/c8_decode_scheduler_timeline.csv` is event/scrape sampled rather than a request-correlated execution timeline.
 
 ### Inference
 
-- The available decode rank-series samples do not show a global running-request total or establish the batch pressure experienced by any one request.
+- Even after the scoped decode DP-shard reconstruction, the public evidence does not show a unique P/D global running-request total or the batch pressure experienced by any one request.
 
 ### Unknown
 
-- Actual decode-worker-total running/waiting counts and per-request decode admission time remain unknown from the public exports.
+- Per-request decode admission time and unique cross-stage P/D running/waiting remain unknown from the public exports.
 
 ## Routing and queue checkpoints
 
@@ -271,7 +271,7 @@
 
 - **Question A — Does AgentX c8 imply only 8 simultaneous HTTP requests? No.** The configured root-lane count is eight, while the observed profile-interval maximum is 11.
 - **Question B — Maximum observed HTTP in-flight during profiling:** 11. The time-weighted mean/P90/P95 are 3.968259088179123/7.0/8.0.
-- **Question C — Was scheduler saturation observed? Unknown at the global scheduler scope.** Explicit rank-export counters exist, but their values cannot be summed into worker/cluster totals or compared as a global saturation fraction.
+- **Question C — Was scheduler saturation observed? Unknown at the global P/D scope.** Report 15 validates decode DP-shard worker/cluster occupancy, but prefill unique-worker union and a global saturation fraction are still unavailable.
 - **Question D — Can H200 queue time be separated from TTFT? No complete request-level decomposition.** The public evidence has `aggregate_scheduler_histogram_and_router_checkpoints_available` plus limited router checkpoints, not a full lifecycle join.
 - **Question E — Is ID03 TTFT associated with offered load?** The unadjusted c8 interval-overlap Spearman result is ρ=0.0239237, p=0.796207, n=119; its bucket values are in `../processed/id03_c8_load_buckets.csv`.
 - **Question F — Can a future external comparison distinguish queueing from execution-side pre-first-token latency? Partly.** This public reference supplies HTTP overlap, rank-series scheduler summaries, routing, and limited checkpoints; an external system must additionally expose a request-correlated lifecycle to make the separation.

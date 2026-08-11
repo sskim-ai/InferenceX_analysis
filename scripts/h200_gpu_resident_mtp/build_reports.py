@@ -240,6 +240,9 @@ def _build_reports(
     _write_c8_concurrency_scheduler_report(
         reports / "13_c8_concurrency_scheduler_reconstruction.md", tables
     )
+    _write_c8_scheduler_worker_cluster_report(
+        reports / "15_c8_scheduler_worker_cluster_reconstruction.md", tables
+    )
     _write_korean_summary(reports / "results_summary_ko.md", tables, recipe, runtime)
 
 
@@ -668,8 +671,9 @@ def _write_c8_concurrency_scheduler_report(path: Path, tables: dict[str, pd.Data
         "At an equal timestamp, end events are processed before start events; a start-context value includes "
         "all requests that start at that exact timestamp.\n"
         "- **SGLang scheduler running/waiting:** explicit `sglang:*` values are aggregate samples in "
-        "endpoint/rank-export series. They are not summed across TP ranks into an unsupported worker or "
-        "cluster total.\n"
+        "endpoint/rank-export series. Prefill TP/CP counters are not summed into an unsupported worker or "
+        "cluster total. A later source/topology validation permits a limited decode DP-shard reconstruction "
+        "only; see Report 15.\n"
         "- **Configured limits:** prefill `max_running_requests=32` and decode "
         "`max_running_requests=200` are capacity settings, not measurements of runtime running requests.\n\n"
     )
@@ -810,20 +814,22 @@ def _write_c8_concurrency_scheduler_report(path: Path, tables: dict[str, pd.Data
     text += "### Evidence\n\n"
     text += _table(_c8_scheduler_key_rows(decode)) + "\n\n"
     text += (
-        f"- Explicit rank-export series show a maximum observed decode `num_running_reqs` of "
-        f"{decode_running} and `num_queue_reqs` of {decode_waiting}; these are not summed across ranks.\n"
+        f"- This report's rank-series inventory shows a maximum observed decode `num_running_reqs` of "
+        f"{decode_running} and `num_queue_reqs` of {decode_waiting}; those inventory maxima are not a "
+        "worker total. Report 15 subsequently validates a DP-shard sum within a decode worker and over "
+        "two decode endpoints, with scope guards.\n"
         "- `../processed/c8_decode_scheduler_timeline.csv` is event/scrape sampled rather than a "
         "request-correlated execution timeline.\n\n"
     )
     text += "### Inference\n\n"
     text += (
-        "- The available decode rank-series samples do not show a global running-request total or establish "
-        "the batch pressure experienced by any one request.\n\n"
+        "- Even after the scoped decode DP-shard reconstruction, the public evidence does not show a unique "
+        "P/D global running-request total or the batch pressure experienced by any one request.\n\n"
     )
     text += "### Unknown\n\n"
     text += (
-        "- Actual decode-worker-total running/waiting counts and per-request decode admission time remain "
-        "unknown from the public exports.\n\n"
+        "- Per-request decode admission time and unique cross-stage P/D running/waiting remain unknown from "
+        "the public exports.\n\n"
     )
 
     text += "## Routing and queue checkpoints\n\n"
@@ -903,9 +909,9 @@ def _write_c8_concurrency_scheduler_report(path: Path, tables: dict[str, pd.Data
         f"root-lane count is eight, while the observed profile-interval maximum is {http_max}.\n"
         f"- **Question B — Maximum observed HTTP in-flight during profiling:** {http_max}. The time-weighted "
         f"mean/P90/P95 are {http_mean}/{http_p90}/{http_p95}.\n"
-        "- **Question C — Was scheduler saturation observed? Unknown at the global scheduler scope.** Explicit "
-        "rank-export counters exist, but their values cannot be summed into worker/cluster totals or compared "
-        "as a global saturation fraction.\n"
+        "- **Question C — Was scheduler saturation observed? Unknown at the global P/D scope.** Report 15 validates "
+        "decode DP-shard worker/cluster occupancy, but prefill unique-worker union and a global saturation fraction "
+        "are still unavailable.\n"
         f"- **Question D — Can H200 queue time be separated from TTFT? No complete request-level decomposition.** "
         f"The public evidence has `{queue_scope}` plus limited router checkpoints, not a full lifecycle join.\n"
         f"- **Question E — Is ID03 TTFT associated with offered load?** The unadjusted c8 interval-overlap "
@@ -944,6 +950,189 @@ def _write_c8_concurrency_scheduler_report(path: Path, tables: dict[str, pd.Data
         "12. `../processed/c8_router_queue_wait_checkpoint_summary.csv`\n"
         "13. `../figures/c8_http_inflight_timeline.png`\n"
         "14. `../figures/id03_ttft_vs_system_inflight.png`\n"
+    )
+    _write(path, text)
+
+
+def _cluster_metric(tables: dict[str, pd.DataFrame], metric: str) -> tuple[str, str]:
+    """Return one scope-labelled cluster reconstruction value without inventing zero."""
+
+    frame = tables.get("c8_cluster_scheduler_reconstruction", pd.DataFrame())
+    if frame.empty or not {"metric", "value", "status"}.issubset(frame.columns):
+        return "Unknown", "Unknown"
+    match = frame.loc[frame["metric"].astype("string") == metric]
+    if match.empty:
+        return "Unknown", "Unknown"
+    return _cell(match.iloc[0]["value"]), _cell(match.iloc[0]["status"])
+
+
+def _write_c8_scheduler_worker_cluster_report(path: Path, tables: dict[str, pd.DataFrame]) -> None:
+    """Render the rank-semantic reconstruction without collapsing metric scopes."""
+
+    rank = tables.get("c8_scheduler_rank_semantics_validation", pd.DataFrame())
+    prefill_worker = tables.get("c8_prefill_worker_scheduler_summary", pd.DataFrame())
+    prefill_cluster = tables.get("c8_prefill_cluster_scheduler_summary", pd.DataFrame())
+    decode_rank = tables.get("c8_decode_rank_scheduler_summary", pd.DataFrame())
+    decode_worker = tables.get("c8_decode_worker_scheduler_summary", pd.DataFrame())
+    decode_cluster = tables.get("c8_decode_cluster_scheduler_summary", pd.DataFrame())
+    crosscheck = tables.get("c8_dynamo_sglang_concurrency_crosscheck", pd.DataFrame())
+    primary = tables.get("c8_cluster_scheduler_reconstruction", pd.DataFrame())
+    source = tables.get("c8_scheduler_source_semantics", pd.DataFrame())
+    prefill_a = _cluster_metric(tables, "prefill_worker_0_rank_envelope_max_running")[0]
+    prefill_b = _cluster_metric(tables, "prefill_worker_1_rank_envelope_max_running")[0]
+    decode_max, decode_max_status = _cluster_metric(tables, "decode_cluster_max_running")
+    decode_p90, _ = _cluster_metric(tables, "decode_cluster_p90_running")
+    decode_wait, _ = _cluster_metric(tables, "decode_cluster_max_waiting")
+    global_max, global_status = _cluster_metric(tables, "unique_global_running_max")
+    http_max, _ = _cluster_metric(tables, "http_max_inflight")
+
+    text = "# 15. c8 SGLang worker / cluster scheduler reconstruction\n\n"
+    text += "## Scope\n\n"
+    text += (
+        "- This analysis uses only public c8 run 31235207041 server-metrics and server-log evidence. "
+        "All gauges are AIPerf-exported one-second timeslice averages within the profiling window.\n"
+        "- `HTTP in-flight`, Dynamo work-handler inflight, SGLang scheduler waiting/running, and GPU/DP-rank "
+        "scope are deliberately separate quantities.\n\n"
+    )
+    text += "## Why rank series could not initially be summed\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        "- The public runtime is 2 prefill workers × TP8/ATTN_CP8 and 2 decode workers × TP8/DP8 "
+        "with DP attention. Source mapping uses the exact public `SGLANG_BUILD_COMMIT` recorded in startup logs.\n\n"
+    )
+    text += _table(source) + "\n\n"
+    text += "### Inference\n\n"
+    text += (
+        "- Equal-looking aggregate max values are insufficient evidence for a worker sum. The reconstruction "
+        "therefore tests every same raw start/end timeslice first.\n\n"
+    )
+    text += "## Prefill TP-rank duplication test\n\n"
+    text += "### Evidence\n\n"
+    text += _table(
+        _select(
+            rank.loc[rank.get("component", pd.Series(dtype="string")).astype("string") == "prefill"],
+            [
+                "worker_id", "metric", "aligned_timeslice_count", "all_8_ranks_exactly_equal_ratio",
+                "overall_max_rank_difference", "timestamp_alignment_status",
+            ],
+        )
+    ) + "\n\n"
+    text += _table(prefill_worker) + "\n\n"
+    text += "### Strong inference\n\n"
+    text += (
+        f"- Prefill TP/CP rank views are highly synchronized (rank-envelope running maxima {prefill_a} and "
+        f"{prefill_b}), so multiplying a rank max by eight is invalid. They are useful pressure evidence.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        "- With CP8, every rank is a metric-emitting attention-TP rank and SGLang counts local `batch.reqs`/"
+        "`waiting_queue` views. The public export lacks per-rank request IDs, so it cannot prove the unique "
+        "logical request union for a prefill worker. Worker and cluster unique prefill running/waiting remain Unknown.\n\n"
+    )
+    text += _table(prefill_cluster) + "\n\n"
+    text += "## Decode DP-rank semantics and worker reconstruction\n\n"
+    text += "### Evidence\n\n"
+    text += _table(
+        _select(
+            decode_rank.loc[
+                decode_rank.get("metric", pd.Series(dtype="string")).astype("string").isin(
+                    ["sglang:num_running_reqs", "sglang:num_queue_reqs"]
+                )
+            ],
+            [
+                "worker_id", "metric", "aligned_timeslice_count", "all_8_ranks_exactly_equal_ratio",
+                "overall_max_rank_difference", "timestamp_alignment_status", "semantic_status",
+            ],
+        )
+    ) + "\n\n"
+    text += "### Validated reconstruction\n\n"
+    text += (
+        "- Under TP8/DP8/DP attention, one attention-TP rank exists per DP shard. The exact source controller "
+        "dispatches normal generation requests to one selected DP worker; complete same-timeslice DP grids can "
+        "therefore be summed **within a decode worker**.\n\n"
+    )
+    text += _table(decode_worker) + "\n\n"
+    text += "## Decode cluster reconstruction\n\n"
+    text += "### Validated reconstruction\n\n"
+    text += (
+        f"- Independent decode-worker counters are intersected over their actual endpoint timeslice intervals; "
+        f"no nearest-neighbor matching, forward-fill, or unrelated-timestamp maxima are used. Decode-stage "
+        f"cluster running max/P90 are **{decode_max}/{decode_p90}** ({decode_max_status}); named generic "
+        f"`num_queue_reqs` cluster max is **{decode_wait}**.\n\n"
+    )
+    text += _table(decode_cluster) + "\n\n"
+    text += "### Scope caveat\n\n"
+    text += (
+        "- `sglang:num_queue_reqs=0` applies to that generic decode scheduler waiting queue. PD-specific "
+        "preallocation/transfer queue gauges are different counters and are not added to it. This is decode-stage "
+        "scheduler occupancy, not GPU sequences or unique system-wide requests.\n\n"
+    )
+    text += "## Dynamo cross-validation\n\n"
+    text += "### Evidence\n\n"
+    text += _table(
+        _select(
+            crosscheck,
+            [
+                "component", "worker_id", "dynamo_metric", "sglang_metric", "common_phase_second_bins",
+                "spearman_rho", "pearson_r", "same_value_fraction", "best_lag_seconds",
+                "dynamo_positive_sglang_zero_fraction", "sglang_positive_dynamo_zero_fraction",
+                "rank_or_reconstruction_method", "alignment_method", "worker_type",
+            ],
+        )
+    ) + "\n\n"
+    text += "### Inference\n\n"
+    text += (
+        "- Dynamo component inflight is correlated with, but demonstrably not identical to, SGLang running. "
+        "It is a lifecycle cross-check, not a substitute scheduler count. Frontend/request-plane scrape series "
+        "remain a separate layer.\n\n"
+    )
+    text += "## Frontend → backend concurrency hierarchy\n\n"
+    text += "```text\nAgentX root lanes\n  → HTTP request-plane inflight\n  → Dynamo frontend/router queue\n  → Dynamo backend component inflight\n  → SGLang scheduler waiting\n  → SGLang scheduler running\n  → GPU rank / DP shard\n```\n\n"
+    text += "## Can prefill + decode be added?\n\n"
+    text += "### Unknown\n\n"
+    text += (
+        "- No request-correlated P/D handoff lifecycle proves that prefill and decode counters do not overlap for "
+        "the same logical request. Prefill unique-worker union is also unavailable. Consequently no P/D sum is "
+        "reported as backend-stage or unique global running.\n\n"
+    )
+    text += "## Final reconstructed concurrency table\n\n"
+    text += _table(primary) + "\n\n"
+    text += "## Direct answers\n\n"
+    text += "### Evidence\n\n"
+    text += (
+        "- **Q1:** Prefill TP8 `num_running_reqs` is neither eight independently summable counts nor a proven "
+        "single duplicated worker gauge; it is CP-rank local scheduler evidence.\n"
+        "- **Q4:** Decode DP rank counters are independent scheduler shards for this TP8/DP8 DP-attention runtime.\n"
+        f"- **Q5:** Decode worker and decode-stage cluster running can be summed in their stated scope; cluster max={decode_max}, P90={decode_p90}.\n"
+        "- **Q6:** Every observed decode `sglang:num_queue_reqs` raw DP-rank sample is zero; this does not cover separate PD-specific queues.\n"
+        f"- **Q7:** The highest confirmed backend scope is decode-stage cluster scheduler occupancy. HTTP max remains a separate {http_max}-request client interval overlap.\n\n"
+    )
+    text += "### Unknown\n\n"
+    text += (
+        f"- **Q2/Q3:** Prefill worker A/B and prefill-cluster unique running/waiting are {global_status.lower()} because rank-local CP views lack request-ID union.\n"
+        f"- **Q8:** Statement C is closest: decode worker/cluster values are reconstructable in their scope, while unique P/D system-global running is {global_max}. "
+        "The old 5/2 rank-series values were not global counts; the reconstructed decode cluster does not make a prefill+decode global total valid.\n\n"
+    )
+    text += "## Implication for local vs InferX comparison\n\n"
+    text += (
+        "- Compare a local global scheduler counter to the public HTTP overlap only as a different layer, and to the "
+        "public decode cluster only when the local metric is explicitly decode-stage scheduler occupancy. Do not "
+        "substitute the public prefill rank envelope for a global prefill count.\n\n"
+    )
+    text += "## Files\n\n"
+    text += (
+        "1. `../processed/c8_cluster_scheduler_reconstruction.csv`\n"
+        "2. `../processed/c8_scheduler_rank_semantics_validation.csv`\n"
+        "3. `../processed/c8_prefill_worker_scheduler_summary.csv`\n"
+        "4. `../processed/c8_prefill_cluster_scheduler_summary.csv`\n"
+        "5. `../processed/c8_decode_rank_scheduler_summary.csv`\n"
+        "6. `../processed/c8_decode_worker_scheduler_summary.csv`\n"
+        "7. `../processed/c8_decode_cluster_scheduler_summary.csv`\n"
+        "8. `../processed/c8_dynamo_sglang_concurrency_crosscheck.csv`\n"
+        "9. `../processed/c8_scheduler_source_semantics.csv`\n"
+        "10. `../figures/c8_prefill_worker_running_waiting.png`\n"
+        "11. `../figures/c8_decode_worker_running_waiting.png`\n"
+        "12. `../figures/c8_frontend_backend_concurrency_timeline.png`\n"
     )
     _write(path, text)
 
@@ -1129,8 +1318,9 @@ def _c8_concurrency_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
         "- The public ID03 relation is descriptive only: it neither proves a queueing cause nor controls "
         "for workload shape, route, cache state, or MTP behavior.\n\n"
         "### Unknown\n\n"
-        "- Global scheduler saturation is unknown: rank-series counters cannot be summed into a worker/cluster "
-        "total, and no saturation fraction is exported.\n"
+        "- Global scheduler saturation is unknown. Rank-series counters require topology/ownership validation; "
+        "the later worker/cluster reconstruction validates decode DP-shard aggregation only, while prefill and "
+        "unique P/D global totals remain Unknown.\n"
         "- A complete per-request H200 queue time is unavailable. The package has aggregate SGLang "
         "queue-time evidence and a limited set of exact Dynamo router long-wait checkpoints, but no "
         "request-correlated accepted→queued→running→first-token lifecycle. TTFT cannot be decomposed "
@@ -1151,6 +1341,54 @@ def _c8_concurrency_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
         "11. `studies/h200_gpu_resident_mtp/processed/c8_decode_scheduler_summary.csv`\n"
         "12. `studies/h200_gpu_resident_mtp/processed/c8_backend_worker_routing_summary.csv`\n"
         "13. `studies/h200_gpu_resident_mtp/processed/c8_router_queue_wait_checkpoint_summary.csv`\n"
+    )
+
+
+def _c8_worker_cluster_handoff_text(tables: dict[str, pd.DataFrame]) -> str:
+    """Append the post-rank-semantic reconstruction to the GitHub handoff."""
+
+    primary = tables.get("c8_cluster_scheduler_reconstruction", pd.DataFrame())
+    prefill = tables.get("c8_prefill_worker_scheduler_summary", pd.DataFrame())
+    decode_worker = tables.get("c8_decode_worker_scheduler_summary", pd.DataFrame())
+    decode_cluster = tables.get("c8_decode_cluster_scheduler_summary", pd.DataFrame())
+    decode_max, decode_max_status = _cluster_metric(tables, "decode_cluster_max_running")
+    decode_p90, _ = _cluster_metric(tables, "decode_cluster_p90_running")
+    prefill_a, _ = _cluster_metric(tables, "prefill_worker_0_rank_envelope_max_running")
+    prefill_b, _ = _cluster_metric(tables, "prefill_worker_1_rank_envelope_max_running")
+    return (
+        "\n\n## c8 Worker/Cluster Scheduler Reconstruction\n\n"
+        "### Evidence\n\n"
+        "- **Prefill TP verdict:** TP8/ATTN_CP8 metrics are CP-rank local scheduler views. Raw series are highly "
+        "synchronized but not perfectly identical; neither TP8 multiplication nor a unique-worker gauge is proven.\n"
+        f"- **Prefill rank envelopes:** running maxima are {prefill_a} and {prefill_b}; these are pressure evidence, "
+        "not unique worker request counts.\n"
+        "- **Decode DP verdict:** TP8/DP8 DP-attention exposes independent rank-local scheduler shards. Exact source "
+        "semantics plus complete raw grids validate summing ranks within a decode worker.\n"
+        f"- **Decode cluster:** exact endpoint-interval intersection gives running max={decode_max}, P90={decode_p90} "
+        f"({decode_max_status}); generic `sglang:num_queue_reqs` is zero in every observed decode DP-rank sample.\n"
+        "- **Dynamo cross-check:** component inflight is correlated with but not equal to SGLang running; frontend/request-plane counters remain separate layers.\n\n"
+        + _table(_select(primary, ["metric", "value", "status", "scope", "notes"]))
+        + "\n\n"
+        + _table(prefill)
+        + "\n\n"
+        + _table(decode_worker)
+        + "\n\n"
+        + _table(decode_cluster)
+        + "\n\n### Unknown\n\n"
+        "- Prefill worker/cluster **unique** running and waiting remain Unknown: no CP-rank request-ID union is exported.\n"
+        "- Prefill + decode cannot become unique system-global running: request-correlated P/D handoff and cross-stage deduplication are absent.\n"
+        "- Decode `num_queue_reqs=0` is the named generic queue only, not a statement that PD prealloc/transfer queues are zero.\n\n"
+        "### Files ChatGPT should read next\n\n"
+        "1. `studies/h200_gpu_resident_mtp/reports/15_c8_scheduler_worker_cluster_reconstruction.md`\n"
+        "2. `studies/h200_gpu_resident_mtp/processed/c8_cluster_scheduler_reconstruction.csv`\n"
+        "3. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_rank_semantics_validation.csv`\n"
+        "4. `studies/h200_gpu_resident_mtp/processed/c8_prefill_worker_scheduler_summary.csv`\n"
+        "5. `studies/h200_gpu_resident_mtp/processed/c8_prefill_cluster_scheduler_summary.csv`\n"
+        "6. `studies/h200_gpu_resident_mtp/processed/c8_decode_rank_scheduler_summary.csv`\n"
+        "7. `studies/h200_gpu_resident_mtp/processed/c8_decode_worker_scheduler_summary.csv`\n"
+        "8. `studies/h200_gpu_resident_mtp/processed/c8_decode_cluster_scheduler_summary.csv`\n"
+        "9. `studies/h200_gpu_resident_mtp/processed/c8_dynamo_sglang_concurrency_crosscheck.csv`\n"
+        "10. `studies/h200_gpu_resident_mtp/processed/c8_scheduler_source_semantics.csv`\n"
     )
 
 
@@ -1276,6 +1514,7 @@ def _build_handoff(
         + _requested_metrics_table(tables.get("id02_by_concurrency", pd.DataFrame()))
         + _id03_handoff_text(tables)
         + _c8_concurrency_handoff_text(tables)
+        + _c8_worker_cluster_handoff_text(tables)
         + "\n\n- **Scope warning:** full per-ID CSVs retain `usage_prompt_cache_read_tokens` only as a raw profile counter; `raw_profile_cache_counter_tps` is not a validated logical-prompt or physical-KV metric.\n"
         + "\n\n## HiSparse c8 vs GPU-resident c8\n\n"
         + _table(comparison)
@@ -1430,7 +1669,8 @@ def _write_korean_summary(
         "SGLang running 수나 GPU sequence 수가 아니다. 동일 timestamp에서는 end를 start보다 먼저 "
         "처리했다.\n"
         "- server-metrics export에는 prefill/decode의 explicit rank-series `num_running_reqs` 및 "
-        "`num_queue_reqs`가 있으나, rank 값을 worker/cluster 합계로 더하지 않았다.\n\n"
+        "`num_queue_reqs`가 있다. 이 summary의 초기 rank-series 표는 자동 합산하지 않았고, Report 15가 "
+        "topology/ownership 검증 후 decode DP-shard 범위만 별도로 재구성한다.\n\n"
     )
     text += "## Inference\n\n"
     text += (
@@ -1441,10 +1681,37 @@ def _write_korean_summary(
     )
     text += "## Unknown\n\n"
     text += (
-        "- global scheduler saturation, worker/cluster total running request, request-level queue time, "
+        "- global scheduler saturation, prefill unique-worker/cluster total 및 P/D unique global running, request-level queue time, "
         "그리고 GPU affinity는 공개 자료만으로 확정할 수 없다. Aggregate queue counter와 일부 Dynamo "
         "long-wait checkpoint는 존재하지만 TTFT를 queue/execution으로 분해하지 않는다. 상세은 "
         "reports/13_c8_concurrency_scheduler_reconstruction.md를 따른다.\n\n"
+    )
+    text += "# c8 SGLang worker / cluster scheduler 재구성\n\n"
+    text += "## Evidence\n\n"
+    text += _table(
+        _select(
+            tables.get("c8_cluster_scheduler_reconstruction", pd.DataFrame()),
+            ["metric", "value", "status", "scope", "notes"],
+        )
+    ) + "\n\n"
+    text += "## Validated reconstruction\n\n"
+    text += (
+        "- Decode TP8/DP8 DP-attention의 DP rank는 source controller와 raw complete rank grid로 independent "
+        "scheduler shard임을 검증했다. 따라서 같은 decode worker 내 DP rank 합계와, 실제 endpoint interval "
+        "overlap에서 계산한 decode cluster running은 해당 decode-stage scope에서만 합산 가능하다.\n"
+        "- `sglang:num_queue_reqs`는 관측된 모든 decode DP rank sample에서 0이다. 이는 generic decode queue의 "
+        "범위이며 PD-specific prealloc/transfer queue 전체가 0이라는 뜻은 아니다.\n\n"
+    )
+    text += "## Strong inference\n\n"
+    text += (
+        "- Prefill TP8/ATTN_CP8 rank series는 매우 동기화된 CP-rank local view다. rank envelope max는 pressure "
+        "evidence로 보존하지만 8배 합산하지 않고 unique worker request count로 승격하지 않는다.\n\n"
+    )
+    text += "## Unknown\n\n"
+    text += (
+        "- Prefill worker/cluster unique running/waiting과 prefill+decode unique global running은 public metric만으로 "
+        "Unknown이다. P/D handoff request deduplication evidence가 없으므로 stage maxima를 더하지 않는다. 상세은 "
+        "reports/15_c8_scheduler_worker_cluster_reconstruction.md를 따른다.\n\n"
     )
     text += "# Concurrency c8 / c12 / c16 비교\n\n"
     text += "- 이 study의 public run은 c8/c12/c16이며, 고정 시간 replay이므로 coverage를 동반해 비교한다.\n"
