@@ -24,7 +24,9 @@ Local 값은 사용자가 제공한 export-safe 요약값만 기록하며, 사�
 
 > 기본 표기는 `Local conc1 | Local conc8 | InferX 결과` 순서로 통일한다.
 >
-> Local conc8의 일반 시스템 지표는 8-copy 전체 실험 요약을 사용한다. Exact paired 비교가 필요한 지표는 별도로 `copy1`이라고 명시한다.
+> **중요:** InferX의 `HTTP P90=7`, `prefill running max=5`, `decode running max=2`는 서로 다른 metric/scope다. **`5+2=7`로 합산하거나 “InferX가 실제로 7개만 동시에 실행했다”고 해석하면 안 된다.** Public export로 확인 가능한 cluster-global scheduler running/waiting 총합은 **Unknown**이다.
+
+## 1.1 환경 및 성능
 
 | Metric | Local conc1 | Local conc8 | InferX 결과 |
 | --- | ---: | ---: | ---: |
@@ -38,14 +40,8 @@ Local 값은 사용자가 제공한 export-safe 요약값만 기록하며, 사�
 | GPU KV runtime capacity | 258,864 tokens/rank | 258,864 tokens/rank | 218,560 tokens/logged decode rank |
 | Approx. primary KV footprint | ≈52.9 KiB/token/rank | ≈52.9 KiB/token/rank | ≈60 KiB/token/rank |
 | External KV tier | LMCache CPU + disk | LMCache CPU + disk | none, decode KV GPU-resident |
-| Root concurrency / copies | 1 | 8 | 8 root lanes |
-| Workload composition | ID03 1 trajectory | 동일 ID03 8 copies | mixed-root c8 안의 ID03 1 trajectory |
 | ID03 exact request coverage | 119/119 | copy1 119/119 | 119/119 |
 | Same output length vs InferX | exact pair 비교 대상 | copy1 119/119 | 119/119 reference |
-| Max HTTP in-flight | 4 | 29 | 11 |
-| Scheduler observed max running | 4 | 7 | prefill rank-series max 5 / decode max 2* |
-| Scheduler observed max waiting | 1 | 25 | prefill rank-series max 5 / decode 0* |
-| Waiting-positive behavior | 0.29% of 1s bins | 93.0% of 1s bins | prefill P50=0, P90=0, P95≈1; decode waiting=0* |
 | TTFT median | **0.563 s** | **26.682 s** (copy1 26.69 s) | **1.081 s** |
 | Queue median | **0.012 s** | **24.385 s** | prefill histogram median ≈0.0024–0.0027 s; decode ≈0.00017–0.00019 s* |
 | Prefill median | 0.531 s | 1.221 s | request-level 동일 metric 미분리 |
@@ -55,12 +51,49 @@ Local 값은 사용자가 제공한 export-safe 요약값만 기록하며, 사�
 | ID03 trajectory wall time | **11m 57s = 717 s** | 아직 별도 trajectory wall-time export 없음 | **8m 02.7s = 482.69 s** |
 | Local/runtime cache-hit ratio | 95.00% | 94.86% | 동일 의미 counter로 직접 비교하지 않음 |
 | External share of cached KV | 1.07% | 99.99% | N/A — GPU-resident KV |
-| KV usage P95 | 72.5% | 98.0% | decode token-usage rank-series P95는 약 91–93%* |
+| KV usage P95 | 72.5% | 98.0% | decode token-usage rank-series P95 약 91–93%* |
 | GPU utilization avg | 52.2% | 86.3% | 동일 scope 값은 현재 비교표에 미포함 |
 | Logical KV load per ID03 trajectory | ≈9.407M tokens | ≈9.407M tokens/copy | ≈9.407M tokens, trace-equivalent logical workload |
 | Logical KV new/store per ID03 trajectory | ≈0.493M tokens | ≈0.493M tokens/copy | ≈0.493M tokens, trace-equivalent logical workload |
 
-\* InferX scheduler/KV 숫자는 endpoint/rank-series scope이며 cluster-global count로 합산하지 않는다.
+\* InferX queue/KV 숫자는 endpoint/rank-series scope이며 Local의 global metric과 동일 scope가 아니다.
+
+## 1.2 동시성 / scheduler / queue — 반드시 scope를 구분해서 읽기
+
+| Metric | Local conc1 | Local conc8 | InferX 결과 | Scope / 읽는 법 |
+| --- | ---: | ---: | ---: | --- |
+| Root concurrency / copies | 1 | 8 | 8 root lanes | workload-generator 설정 |
+| Workload composition | ID03 1 trajectory | 동일 ID03 8 copies | mixed-root c8 안의 ID03 1 trajectory | root 수가 같아도 fan-out은 다를 수 있음 |
+| **HTTP in-flight max** | **4** | **29** | **11** | request-plane에서 동시에 살아 있던 HTTP/profile request 수 |
+| HTTP in-flight time-weighted mean | 미산출 | 미산출 | **3.97** | InferX 전체 c8 957 profile request 기준 |
+| HTTP in-flight P90 | 미산출 | 미산출 | **7** | **running=7이라는 뜻이 아님.** 시간의 90%에서 HTTP in-flight ≤7이라는 뜻 |
+| HTTP in-flight P95 | 미산출 | 미산출 | **8** | scheduler running 수와 다른 metric |
+| **Scheduler running — global/cluster total** | **max 4** | **max 7** | **Unknown** | Local은 global 관측. InferX public export는 cluster-global 총합을 제공하지 않음 |
+| InferX prefill running reference | N/A | N/A | rank-series max **5** | prefill endpoint/rank-series 값. cluster total 아님 |
+| InferX decode running reference | N/A | N/A | rank-series max **2** | decode endpoint/rank-series 값. cluster total 아님 |
+| **Scheduler waiting — global/cluster total** | **max 1** | **max 25** | **Unknown** | Local은 global 관측. InferX public export는 cluster-global 총합을 제공하지 않음 |
+| InferX prefill waiting reference | N/A | N/A | rank-series P50=0, P90=0, P95≈1, max **5** | cluster-global waiting=5라는 뜻이 아님 |
+| InferX decode waiting reference | N/A | N/A | rank-series **0** | decode endpoint/rank-series에서 waiting=0 관측 |
+| Waiting-positive behavior | 0.29% of 1s bins | **93.0% of 1s bins** | 동일한 cluster-global metric 없음 | Local conc8은 persistent backlog가 직접 관측됨 |
+
+### 이 표에서 가장 중요한 해석
+
+```text
+InferX HTTP P90 = 7
+≠ InferX scheduler running = 7
+
+InferX prefill running max = 5
++ InferX decode running max = 2
+≠ InferX global running = 7
+```
+
+이유는 다음과 같다.
+
+- `HTTP in-flight`는 frontend/request-plane interval overlap이다.
+- `num_running_reqs`는 SGLang scheduler metric이다.
+- InferX의 prefill/decode 값은 서로 다른 endpoint/rank-series에서 관측된 값이다.
+- Public export는 각 rank-series를 합산해서 cluster-global running/waiting 총합으로 해석할 근거를 제공하지 않는다.
+- 따라서 **InferX에서 실제로 동시에 GPU service를 받고 있던 request 총수는 현재 Unknown**으로 남겨야 한다.
 
 ---
 
@@ -78,7 +111,9 @@ Local 값은 사용자가 제공한 export-safe 요약값만 기록하며, 사�
 | Context limit | 202,752 | 202,752 | 1,048,576 |
 | 실제 c8 workload | 해당 없음 | 동일 ID03 8-copy | mixed-root AgentX c8 |
 | 실제 HTTP peak | 4 | 29 | 11 |
-| Queue regime | 거의 queue-free | deep saturation | 대체로 low-waiting/headroom |
+| Cluster-global scheduler running | max 4 | max 7 | **Unknown** |
+| Cluster-global scheduler waiting | max 1 | max 25 | **Unknown** |
+| Queue regime | 거의 queue-free | deep saturation | 대체로 low-waiting/headroom으로 관측되나 global total은 Unknown |
 
 따라서 `Local conc8`과 `InferX c8`은 이름만 c8이 같고 실제 backend pressure는 동일하지 않다.
 
@@ -88,26 +123,34 @@ Local 값은 사용자가 제공한 export-safe 요약값만 기록하며, 사�
 
 | Metric | Local conc1 | Local conc8 | InferX 결과 |
 | --- | ---: | ---: | ---: |
-| Max HTTP in-flight | 4 | 29 | 11 |
-| Max running | 4 | 7 | prefill rank-series 5 / decode 2* |
-| Max waiting | 1 | 25 | prefill rank-series 5 / decode 0* |
-| Waiting-positive | 0.29% | 93.0% | prefill P90 waiting=0; decode waiting=0* |
-| TTFT median | 0.563 s | 26.682 s | 1.081 s |
-| Queue median | 0.012 s | 24.385 s | typical prefill queue median ≈2–3 ms* |
-| TTFT−queue proxy | 0.770 s | 1.812 s | 1.081 s observed TTFT* |
-| Weighted decode TPS | 93.05 | 61.71 | 90.45 |
-| KV usage P95 | 72.5% | 98.0% | decode token-usage rank-series P95 ≈91–93%* |
+| HTTP in-flight max | 4 | **29** | **11** |
+| Cluster-global scheduler running max | 4 | **7** | **Unknown** |
+| Cluster-global scheduler waiting max | 1 | **25** | **Unknown** |
+| InferX scheduler 참고값 | N/A | N/A | prefill rank-series running≤5 / waiting≤5; decode running≤2 / waiting=0 |
+| Waiting-positive | 0.29% | **93.0%** | 동일 scope global metric 없음; prefill rank-series P90 waiting=0 |
+| TTFT median | 0.563 s | **26.682 s** | 1.081 s |
+| Queue median | 0.012 s | **24.385 s** | typical prefill queue histogram median ≈2–3 ms* |
+| TTFT−queue proxy | 0.770 s | **1.812 s** | 1.081 s observed TTFT* |
+| Weighted decode TPS | 93.05 | **61.71** | 90.45 |
+| KV usage P95 | 72.5% | **98.0%** | decode token-usage rank-series P95 ≈91–93%* |
 
 Local은 conc1에서는 거의 queue-free지만, conc8에서는 queue median 24.385초와 waiting-positive 93%가 관측되는 deep-saturation 상태다.
 
 Local c1→c8 변화는 다음처럼 분해된다.
 
+- HTTP in-flight max: **4 → 29**
+- 실제 global running max: **4 → 7**
+- 실제 global waiting max: **1 → 25**
 - TTFT median: **0.563 → 26.682 s**, 약 47.4× 증가
 - Queue median: **0.012 → 24.385 s**, 약 2,032× 증가
 - TTFT−queue mean proxy: **0.770 → 1.812 s**, 약 2.35× 증가
 - Weighted decode TPS: **93.05 → 61.71 tok/s**, 약 66.3% 유지
 
-즉 conc8의 극단적인 first-token latency는 active decode 자체가 47배 느려져서가 아니라, **execution-side degradation + 훨씬 큰 scheduler/admission backlog**가 결합된 결과다.
+따라서 Local conc8에서는 들어온 request fan-out이 실제 service/admission capacity보다 훨씬 빠르게 증가했고, 그 차이가 waiting backlog로 누적됐다.
+
+다만 이것을 단순히 **`max_num_seqs=8` hard limit 때문**이라고 해석하면 안 된다. Local에서는 설정상 8 sequence까지 허용했지만 실제 running max가 7에 머물렀고, 동시에 KV usage P95가 98%, external share of cached KV가 99.99%였다. 따라서 실제 binding constraint는 sequence-count ceiling 하나가 아니라 KV working-set pressure, external KV staging, batch/token budget, TP2 compute contention, aggregated prefill/decode interference 등이 결합된 결과일 가능성이 높다.
+
+즉 `max_num_seqs`를 더 높여도 다른 자원 병목이 그대로라면 running 수와 queue time이 거의 개선되지 않을 수 있다.
 
 ---
 
@@ -175,7 +218,7 @@ Local conc1과 InferX c8는 둘 다 typical persistent queue가 거의 없는 op
 | Approx. Local conc8 proxy / InferX TTFT | N/A | **1.68×** | reference 1.0× |
 | Weighted decode TPS | 93.05 | 61.71 | 90.45 |
 
-\* InferX 1.081초는 queue-adjusted 값이 아니라 observed median TTFT다. 다만 prefill queue median은 약 2–3ms이고 decode waiting은 0으로, typical queue pressure는 Local conc8보다 매우 작다.
+\* InferX 1.081초는 queue-adjusted 값이 아니라 observed median TTFT다. 다만 prefill queue histogram median은 약 2–3ms이고 decode waiting rank-series는 0으로, typical queue pressure는 Local conc8보다 매우 작다.
 
 ## 5.3 Raw deployment-level view
 
@@ -184,7 +227,9 @@ Local conc1과 InferX c8는 둘 다 typical persistent queue가 거의 없는 op
 | Raw TTFT median | 0.563 s | **26.682 s** | **1.081 s** |
 | Weighted decode TPS | 93.05 | **61.71** | **90.45** |
 | HTTP peak | 4 | **29** | **11** |
-| Waiting regime | 거의 없음 | **persistent/deep saturation** | **mostly low-waiting** |
+| Global scheduler running | max 4 | max 7 | **Unknown** |
+| Global scheduler waiting | max 1 | max 25 | **Unknown** |
+| Waiting regime | 거의 없음 | **persistent/deep saturation** | **mostly low-waiting based on rank-series evidence; global total Unknown** |
 
 ---
 
@@ -234,26 +279,30 @@ InferX는 GPU-resident KV이므로 물리적인 external load/store counter를 L
 # 8. Main conclusions
 
 1. **Local conc1은 low-contention baseline**이다. TTFT 0.563초, queue 0.012초, decode TPS 93.05 tok/s다.
-2. **Local conc8은 deep saturation**이다. TTFT 26.682초 중 queue median이 24.385초이며, HTTP peak 29, max waiting 25가 관측됐다.
-3. **InferX c8은 Local conc8과 같은 c8 부하가 아니다.** HTTP max 11, time-weighted mean 3.97, P90 7, P95 8이며 typical waiting은 낮다.
-4. **Local conc8 raw TTFT가 InferX보다 매우 길지만 decode TPS 차이는 훨씬 작다.** 따라서 TTFT 격차의 상당 부분은 Local scheduler/admission backlog로 설명된다.
-5. **Local conc1과 InferX는 decode TPS가 같은 order**다: 93.05 vs 90.45 tok/s. 이는 low-contention behavior 비교이며 hardware efficiency 비교가 아니다.
-6. **Local conc8에서 queue만 제외한 service-side proxy는 약 1.812초**로 InferX observed TTFT 1.081초와 같은 1초대 order다.
-7. **ID03 logical KV load/store workload는 세 비교 모두 사실상 동일**하다: trajectory당 약 9.407M reusable/load + 0.493M new/store tokens.
-8. **ID03 trajectory wall time은 현재 Local conc1 717초 vs InferX 482.69초**로, InferX가 약 32.7% 짧다.
+2. **Local conc8은 deep saturation**이다. TTFT 26.682초 중 queue median이 24.385초이며, HTTP peak 29, global max waiting 25가 관측됐다.
+3. **InferX c8은 Local conc8과 같은 c8 부하가 아니다.** HTTP max 11, time-weighted mean 3.97, P90 7, P95 8이다.
+4. **InferX의 실제 cluster-global scheduler running/waiting request 수는 Unknown이다.** `HTTP P90=7`은 running 7을 뜻하지 않으며, `prefill max 5 + decode max 2`도 global running 7로 합산할 수 없다.
+5. Public rank-series에서는 prefill waiting이 대부분 0(P90=0), decode waiting이 0으로 관측되어 **persistent waiting이 낮은 operating regime**이라는 질적 해석은 가능하다.
+6. **Local conc8 raw TTFT가 InferX보다 매우 길지만 decode TPS 차이는 훨씬 작다.** 따라서 TTFT 격차의 상당 부분은 Local scheduler/admission backlog로 설명된다.
+7. **Local conc1과 InferX는 decode TPS가 같은 order**다: 93.05 vs 90.45 tok/s. 이는 low-contention behavior 비교이며 hardware efficiency 비교가 아니다.
+8. **Local conc8에서 queue만 제외한 service-side proxy는 약 1.812초**로 InferX observed TTFT 1.081초와 같은 1초대 order다.
+9. **ID03 logical KV load/store workload는 세 비교 모두 사실상 동일**하다: trajectory당 약 9.407M reusable/load + 0.493M new/store tokens.
+10. **ID03 trajectory wall time은 현재 Local conc1 717초 vs InferX 482.69초**로, InferX가 약 32.7% 짧다.
 
 가장 안전한 최종 표현은 다음과 같다.
 
-> Local 2×H200 Aggregated 서버는 low-contention 상태에서는 빠른 service rate를 보이지만, 동일 ID03 workload에서 concurrency가 증가하면 scheduler/KV pressure가 빠르게 포화된다. Local conc8의 매우 큰 TTFT는 active inference 성능 저하만으로 설명되지 않으며 persistent queue backlog가 지배적이다. Public InferenceX c8은 동일 root-concurrency label을 사용하지만 실제 request-plane load가 훨씬 낮고 P/D-disaggregated + GPU-resident KV + MTP 구조로 대부분 low-waiting regime에 머문다.
+> Local 2×H200 Aggregated 서버는 low-contention 상태에서는 빠른 service rate를 보이지만, 동일 ID03 workload에서 concurrency가 증가하면 scheduler/KV pressure가 빠르게 포화된다. Local conc8의 매우 큰 TTFT는 active inference 성능 저하만으로 설명되지 않으며 persistent queue backlog가 지배적이다. Public InferenceX c8은 동일 root-concurrency label을 사용하지만 실제 request-plane load가 훨씬 낮다. Public export에서는 cluster-global running/waiting request 총수를 직접 복원할 수 없으므로 Local의 global 7/25와 숫자 대 숫자로 비교하면 안 된다. 다만 rank-series evidence상 public system은 대부분 low-waiting regime에 머문다.
 
 ---
 
 # 9. 비교 시 금지할 해석
 
+- `InferX HTTP P90=7이므로 실제 running request도 7개다`
+- `InferX prefill running 5 + decode running 2 = global running 7`
+- `InferX prefill waiting max 5 = cluster-global waiting 5`
 - `2 GPU가 32 GPU보다 빠르다`
 - `Local c8와 InferX c8는 동일 offered load다`
 - `59/62 vs 90 tok/s 비율이 GPU 성능비다`
-- `InferX rank-series waiting=5를 cluster-global waiting=5로 해석한다`
 - `H200 cache_read_tokens를 검증 없이 physical/logical KV load 총량으로 사용한다`
 - `MTP / FP8 / P/D disaggregation 중 하나가 단독으로 차이를 만들었다고 주장한다`
 
