@@ -1,0 +1,57 @@
+request_level_file: /tmp/b300_conc40_analysis/artifact/extracted/aiperf_artifacts/profile_export.jsonl
+total_records: 5417
+first_record_top_level_keys: ['metadata', 'metrics']
+first_record_metadata_keys: ['agent_depth', 'benchmark_phase', 'context_overflow_skip', 'conversation_id', 'credit_issued_ns', 'record_processor_id', 'request_ack_ns', 'request_end_ns', 'request_start_ns', 'root_correlation_id', 'session_num', 'source_kind', 'source_outer_idx', 'source_trace_id', 'turn_index', 'was_cancelled', 'worker_id', 'x_correlation_id', 'x_request_id']
+first_record_metrics_keys: ['decode_duration', 'e2e_output_token_throughput', 'http_req_blocked', 'http_req_chunks_received', 'http_req_chunks_sent', 'http_req_connecting', 'http_req_connection_overhead', 'http_req_connection_reused', 'http_req_data_received', 'http_req_data_sent', 'http_req_dns_lookup', 'http_req_duration', 'http_req_receiving', 'http_req_sending', 'http_req_total', 'http_req_waiting', 'input_sequence_length', 'osl_mismatch_diff_pct', 'output_sequence_length', 'output_token_count', 'prefill_throughput_per_user', 'request_latency', 'time_to_first_token', 'usage_completion_tokens', 'usage_prompt_tokens', 'usage_total_tokens']
+
+recursive_phase_fields_and_values:
+  metadata.benchmark_phase: {'warmup': 444, 'profiling': 4973}
+
+metadata_field_presence_and_types:
+  metadata.agent_depth: present=5417/5417 types={'int': 5417}
+  metadata.benchmark_phase: present=5417/5417 types={'str': 5417}
+  metadata.context_overflow_skip: present=5417/5417 types={'bool': 5417}
+  metadata.conversation_id: present=5417/5417 types={'str': 5417}
+  metadata.credit_issued_ns: present=5417/5417 types={'int': 5417}
+  metadata.parent_correlation_id: present=2234/5417 types={'str': 2234}
+  metadata.phase_index: present=4973/5417 types={'int': 4973}
+  metadata.phase_kind: present=4973/5417 types={'str': 4973}
+  metadata.phase_name: present=4973/5417 types={'str': 4973}
+  metadata.profiling_index: present=4973/5417 types={'int': 4973}
+  metadata.record_processor_id: present=5417/5417 types={'str': 5417}
+  metadata.request_ack_ns: present=5417/5417 types={'int': 5417}
+  metadata.request_end_ns: present=5417/5417 types={'int': 5417}
+  metadata.request_start_ns: present=5417/5417 types={'int': 5417}
+  metadata.root_correlation_id: present=5417/5417 types={'str': 5417}
+  metadata.session_num: present=5417/5417 types={'int': 5417}
+  metadata.source_inner_idx: present=1471/5417 types={'int': 1471}
+  metadata.source_kind: present=5417/5417 types={'str': 5417}
+  metadata.source_outer_idx: present=5417/5417 types={'int': 5417}
+  metadata.source_trace_id: present=5417/5417 types={'str': 5417}
+  metadata.turn_index: present=5417/5417 types={'int': 5417}
+  metadata.was_cancelled: present=5417/5417 types={'bool': 5417}
+  metadata.worker_id: present=5417/5417 types={'str': 5417}
+  metadata.x_correlation_id: present=5417/5417 types={'str': 5417}
+  metadata.x_request_id: present=5417/5417 types={'str': 5417}
+
+identity_rule:
+  root_id = metadata.source_trace_id (independent artifact field; never derived from conversation_id)
+  validation: conversation_id root prefix before :: matched source_trace_id for all records
+  root_tree_session_id = metadata.root_correlation_id
+  per-conversation session_id = metadata.x_correlation_id
+  metadata.session_num is credit_num (per-request counter), not a stable session identity
+  lane_id is absent from JSONL; initial lane_id is joined from the aiperf.log TrajectorySource lane table
+
+source_index_rule:
+  source_outer_idx and source_inner_idx are kept separately; missing inner index remains NULL/blank
+  source_position is derived from public corpus chronological order (t, outer_idx, stream/k tie breaker)
+  this is the historical loader global metric-prepass total order; execution itself is per-conversation DAG/timestamp replay, not one flattened queue
+  equal-(t,outer_idx) ambiguity groups among observed 94 source roots: 0
+
+timestamp_rule:
+  execution_timestamp = metadata.request_start_ns
+  completion_timestamp = metadata.request_end_ns
+  execution_ordinal and completion_ordinal are independently ranked; JSONL order is retained separately
+  warmup rows with jsonl_ordinal == execution_ordinal: 89/444
+  warmup rows with jsonl_ordinal == completion_ordinal: 227/444
+  warmup rows with execution_ordinal == completion_ordinal: 98/444

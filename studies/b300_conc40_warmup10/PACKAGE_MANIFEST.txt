@@ -1,0 +1,27 @@
+InferenceX MiniMax-M3 B300 Conc40 AgentX analysis bundle
+
+Top-level integrated report:
+  InferenceX_MiniMax_M3_B300_Conc40_AgentX_full_result_ko.md
+
+outputs/:
+  01_artifact_inventory.txt
+  02_schema_summary.txt
+  03_phase_counts.csv
+  04_initial40_root_summary.csv
+  05_recycled_root_summary.csv
+  06_warmup_request_detail.csv
+  07_warmup_distribution.csv
+  08_aiperf_818c3a5a_source_evidence.md
+  09_final_analysis_ko.md
+
+code/:
+  generate_outputs.py
+  scan_profile.py
+  inspect_corpus_structure.py
+  quick_initial.py
+  build_delivery.py
+
+Excluded intentionally:
+  Raw GitHub artifact ZIP and extracted large metric files
+  Public corpus raw/prefix data
+  Any private/internal logs or credentials
